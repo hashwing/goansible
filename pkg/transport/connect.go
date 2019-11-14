@@ -17,9 +17,21 @@ type connection struct {
 }
 
 func Connect(user, passwd, pkFile, addr string) (model.Connection, error) {
-	var am ssh.AuthMethod
+	auth := []ssh.AuthMethod{}
 	if passwd != "" {
-		am = ssh.Password(passwd)
+		keyboardInteractiveChallenge := func(
+			user,
+			instruction string,
+			questions []string,
+			echos []bool,
+		) (answers []string, err error) {
+			if len(questions) == 0 {
+				return []string{}, nil
+			}
+			return []string{passwd}, nil
+		}
+		auth = append(auth, ssh.Password(passwd))
+		auth = append(auth, ssh.KeyboardInteractive(keyboardInteractiveChallenge))
 	} else {
 		pkData, err := ioutil.ReadFile(pkFile)
 		if err != nil {
@@ -29,9 +41,9 @@ func Connect(user, passwd, pkFile, addr string) (model.Connection, error) {
 		if err != nil {
 			return nil, err
 		}
-		am = ssh.PublicKeys(pk)
+		auth = append(auth, ssh.PublicKeys(pk))
 	}
-	auth := []ssh.AuthMethod{am}
+
 	config := ssh.Config{
 		Ciphers: []string{"aes128-ctr", "aes192-ctr", "aes256-ctr", "aes128-gcm@openssh.com", "arcfour256", "arcfour128", "aes128-cbc", "3des-cbc", "aes192-cbc", "aes256-cbc"},
 	}
