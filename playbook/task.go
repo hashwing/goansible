@@ -3,13 +3,14 @@ package playbook
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/common"
+	"github.com/hashwing/goansible/pkg/termutil"
 	"github.com/hashwing/goansible/pkg/transport"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,7 +22,7 @@ const (
 )
 
 func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
-	log.Infof("Start %s playbook ================================", p.Name)
+	termutil.FullInfo("Playbook [%s] ", "=", p.Name)
 	if p.ImportPlaybook != "" {
 		pls, err := UnmarshalFromFile(conf.PlaybookFolder + "/" + p.ImportPlaybook)
 		if err != nil {
@@ -69,7 +70,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 				err := p.runTask(itask, groupVars, g, conf)
 				if err != nil {
 					if itask.IgnoreError {
-						log.Info("ignore error ...")
+						termutil.Printf("ignore error ...\n")
 						continue
 					}
 					return err
@@ -80,18 +81,19 @@ func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 		err := p.runTask(t, groupVars, g, conf)
 		if err != nil {
 			if t.IgnoreError {
-				log.Info("ignore error ...")
+				termutil.Printf("ignore error ...\n")
 				continue
 			}
 			return err
 		}
+		fmt.Println("")
 	}
 
 	return nil
 }
 
 func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
-	log.Infof("Start %s task ******************************", t.Name)
+	fmt.Println(termutil.Full("Task [%s] ", "*", t.Name))
 	var action model.Action
 	if t.FileAction != nil {
 		action = t.FileAction
@@ -129,7 +131,7 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 			}
 			if t.When != "" {
 				if !When(t.When, vars) {
-					log.Infof("slip:%s", h.Name)
+					termutil.Printf("slip: [%s]", h.Name)
 					return
 				}
 			}
@@ -141,13 +143,13 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 				vars.Item = item
 				conn, err := getConn(h.Name)
 				if err != nil {
-					log.Errorf("error:%s, msg: %v", h.Name, err)
+					termutil.Errorf("error: [%s], msg: %v", h.Name, err)
 					globalErr = err
 					return
 				}
 				stdout, err := action.Run(context.Background(), conn, conf, vars)
 				if err != nil {
-					log.Errorf("error:%s, msg: %v", h.Name, err)
+					termutil.Errorf("error: [%s], msg: %v", h.Name, err)
 					globalErr = err
 					return
 				}
@@ -165,17 +167,17 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 				if t.Debug != "" {
 					info, err := common.ParseTpl(t.Debug, vars)
 					if err != nil {
-						log.Errorf("error:%s, msg: %v", h.Name, err)
+						termutil.Errorf("error: [%s], msg: %v", h.Name, err)
 						globalErr = err
 						return
 					}
-					log.Infof("debug:%s", info)
+					termutil.Changedf("debug: %s", info)
 				}
 				if v, ok := item.(string); ok && v != "" {
-					log.Infof("success:%s itme=>%s", h.Name, v)
+					termutil.Successf("success: [%s] itme=>%s", h.Name, v)
 				}
 			}
-			log.Infof("success:%s", h.Name)
+			termutil.Successf("success: [%s]", h.Name)
 		}(h)
 	}
 	wg.Wait()
