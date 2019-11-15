@@ -20,6 +20,7 @@ type UntilAction struct {
 }
 
 var grepPortShell = "ss -lnp|awk '{print $5}'|grep  -n :%d$"
+var grepPortNetShell = "netstat -lnp|awk '{print $5}'|grep  -n :%d$"
 
 func (a *UntilAction) Run(ctx context.Context, conn model.Connection, conf model.Config, vars *model.Vars) (string, error) {
 	if a.Port != 0 {
@@ -41,6 +42,14 @@ func (a *UntilAction) Run(ctx context.Context, conn model.Connection, conf model
 		stdout, err := conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
 			return sess.Start(a.Shell), nil
 		})
+		if err != nil && a.Port != 0 {
+			stdout, err = conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
+				return sess.Start(grepPortNetShell), nil
+			})
+		}
+		if err != nil {
+			return stdout, err
+		}
 		isMatch, err := regexp.MatchString(a.Match, stdout)
 		if err != nil {
 			return stdout, err
