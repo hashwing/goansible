@@ -186,6 +186,9 @@ var globalConns map[string]model.Connection = make(map[string]model.Connection)
 
 func initConn(gs map[string]*model.Group) error {
 	for _, h := range gs["all"].Hosts {
+		if h.Name == "localhost" {
+			continue
+		}
 		host, ok := h.HostVars[sshHost]
 		if !ok {
 			return errors.New(h.Name + " ssh host undefine")
@@ -218,5 +221,8 @@ func initConn(gs map[string]*model.Group) error {
 }
 
 func getConn(name string) (model.Connection, error) {
+	if name == "localhost" {
+		return transport.ConnectCmd(), nil
+	}
 	return globalConns[name], nil
 }

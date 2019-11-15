@@ -1,15 +1,18 @@
 package transport
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
+	"path/filepath"
 	"time"
 
-	"context"
-
 	"github.com/hashwing/goansible/model"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/sync/errgroup"
 )
 
 type connection struct {
@@ -103,4 +106,59 @@ func (conn *connection) Exec(ctx context.Context, withTerminal bool, fn model.Ex
 
 	// Make sure we always return some error when the command is cancelled
 	return sess.Output(), ctx.Err()
+}
+
+func (conn *connection) CopyFile(ctx context.Context, src io.Reader, size int64, dest, mode string) error {
+	_, err := conn.Exec(ctx, false, func(sess model.Session) (error, *errgroup.Group) {
+		dir, _ := filepath.Split(dest)
+		// Start scp receiver on the remote host
+		err := sess.Start("scp -qt " + dir)
+		if err != nil {
+			return fmt.Errorf("failed to start scp receiver: %s", err), nil
+		}
+		var g errgroup.Group
+		g.Go(func() error {
+			err := copyFile(
+				sess,
+				src,
+				size,
+				dest,
+				mode,
+			)
+			return err
+		})
+		return nil, &g
+	})
+	if err != nil {
+		return fmt.Errorf("failed to copy file %s to %s: %v", src, dest, err)
+	}
+	return nil
+}
+
+// Copies the contents of src to dest on a remote host
+func copyFile(sess model.Session, src io.Reader, size int64, dest, mode string) error {
+	// Instruct the remote scp process that we want to bail out immediately
+	defer func() {
+		err := sess.CloseStdin()
+		if err != nil {
+			log.Warnf("Failed to close session stdin: %s", err)
+		}
+	}()
+
+	_, err := fmt.Fprintln(sess.Stdin(), "C"+mode, size, filepath.Base(dest))
+	if err != nil {
+		return fmt.Errorf("failed to create remote file: %s", err)
+	}
+
+	_, err = io.Copy(sess.Stdin(), src)
+	if err != nil {
+		return fmt.Errorf("failed to write remote file contents: %s", err)
+	}
+
+	_, err = fmt.Fprint(sess.Stdin(), "\x00")
+	if err != nil {
+		return fmt.Errorf("failed to close remote file: %s", err)
+	}
+
+	return nil
 }

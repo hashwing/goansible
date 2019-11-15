@@ -21,48 +21,26 @@ type TemplateAction struct {
 }
 
 func (a *TemplateAction) Run(ctx context.Context, conn model.Connection, conf model.Config, vars *model.Vars) (string, error) {
-	output, err := conn.Exec(ctx, false, func(sess model.Session) (error, *errgroup.Group) {
-		tpl, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, a.Src))
-		if err != nil {
-			return fmt.Errorf("failed to open source file: %s", err), nil
-		}
-		data, err := common.ParseTpl(string(tpl), vars)
-		if err != nil {
-			return fmt.Errorf("failed to parse source file: %s", err), nil
-		}
-		buf := bytes.NewBufferString(data)
-
-		dir, _ := filepath.Split(a.Dest)
-
-		// Start scp receiver on the remote host
-		err = sess.Start("scp -qt " + dir)
-		if err != nil {
-			return fmt.Errorf("failed to start scp receiver: %s", err), nil
-		}
-
-		mode := a.Mode
-		if mode == "" {
-			mode = "0644"
-		}
-		var g errgroup.Group
-		g.Go(func() error {
-			err := copyFile(
-				sess,
-				buf,
-				int64(len(data)),
-				a.Dest,
-				mode,
-			)
-			return err
-		})
-		return nil, &g
-	})
+	tpl, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, a.Src))
 	if err != nil {
-		return output, fmt.Errorf("failed to copy file %q: %s", a.Src, err)
+		return "", fmt.Errorf("failed to open source file: %s", err)
+	}
+	data, err := common.ParseTpl(string(tpl), vars)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse source file: %s", err)
+	}
+	buf := bytes.NewBufferString(data)
+	mode := a.Mode
+	if mode == "" {
+		mode = "0644"
+	}
+	err = conn.CopyFile(ctx, buf, int64(len(data)), a.Dest, mode)
+	if err != nil {
+		return "", fmt.Errorf("failed to copy file %q: %s", a.Src, err)
 	}
 
 	if a.Owner != "" && a.Group != "" {
-		output, err = conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
+		output, err := conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
 			return sess.Start(
 				fmt.Sprintf("chown %s:%s %s", a.Owner, a.Group, a.Dest),
 			), nil
@@ -75,5 +53,5 @@ func (a *TemplateAction) Run(ctx context.Context, conn model.Connection, conf mo
 		}
 	}
 
-	return output, nil
+	return "", nil
 }
