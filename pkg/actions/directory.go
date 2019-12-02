@@ -22,7 +22,7 @@ func (a *DirectoryAction) Run(ctx context.Context, conn model.Connection, conf m
 		return "", err
 	}
 	mko, err := conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
-		return sess.Start("mkdir " + dest), nil
+		return sess.Start("mkdir -p" + dest), nil
 	})
 	if err != nil {
 		return mko, err
