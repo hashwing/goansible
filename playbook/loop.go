@@ -10,9 +10,13 @@ import (
 func Loop(loop interface{}, vars *model.Vars) []interface{} {
 	switch reflect.TypeOf(loop).Kind() {
 	case reflect.Slice:
-		return loop.([]interface{})
+		res:=make([]interface{},0)
+		for _,item:=range loop.([]interface{}){
+			res=append(res,common.ParseTplWithPanic(item.(string)))
+		}
+		return res
 	case reflect.String:
-		v, res := common.GetVar(common.ParseTplWithPanic(loop.(string), vars), vars)
+		v, res := common.GetVar(loop.(string), vars)
 		if res {
 			return v.([]interface{})
 		}
