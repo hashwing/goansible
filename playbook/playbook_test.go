@@ -1,6 +1,7 @@
 package playbook
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashwing/goansible/model"
@@ -8,17 +9,23 @@ import (
 )
 
 func TestNewPlaybook(t *testing.T) {
-	ps, err := UnmarshalFromFile("index.yaml")
+	ps, err := UnmarshalFromFile("testdata/index.yaml")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	inv, _ := inventory.NewFile("hosts")
+	inv, err := inventory.NewFile("testdata/hosts")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	gs, err := inv.Groups()
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	fmt.Println("", gs)
 
 	for _, p := range ps {
 		err := p.Run(gs, model.Config{

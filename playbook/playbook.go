@@ -18,19 +18,20 @@ type Playbook struct {
 }
 
 type Task struct {
-	Name        string                  `yaml:"name"`
-	FileAction  *actions.FileAction     `yaml:"file"`
-	Template    *actions.TemplateAction `yaml:"template"`
-	ShellAction *actions.ShellAction    `yaml:"shell"`
-	StdOut      string                  `yaml:"stdout"`
-	Regexp      *actions.RegexpAction   `yaml:"regexp"`
-	Debug       string                  `yaml:"debug"`
-	Loop        interface{}             `yaml:"loop"`
-	Setface     *actions.SetfaceAction  `yaml:"setface"`
-	Until       *actions.UntilAction    `yaml:"until"`
-	When        string                  `yaml:"when"`
-	Include     string                  `yaml:"include"`
-	IgnoreError bool                    `yaml:"ignore_error"`
+	Name        string                   `yaml:"name"`
+	FileAction  *actions.FileAction      `yaml:"file"`
+	Template    *actions.TemplateAction  `yaml:"template"`
+	ShellAction *actions.ShellAction     `yaml:"shell"`
+	StdOut      string                   `yaml:"stdout"`
+	Regexp      *actions.RegexpAction    `yaml:"regexp"`
+	Debug       string                   `yaml:"debug"`
+	Loop        interface{}              `yaml:"loop"`
+	Setface     *actions.SetfaceAction   `yaml:"setface"`
+	Until       *actions.UntilAction     `yaml:"until"`
+	Directory   *actions.DirectoryAction `yaml:"directory"`
+	When        string                   `yaml:"when"`
+	Include     string                   `yaml:"include"`
+	IgnoreError bool                     `yaml:"ignore_error"`
 }
 
 func UnmarshalFromFile(playbookFile string) ([]Playbook, error) {

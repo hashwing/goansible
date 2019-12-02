@@ -43,7 +43,7 @@ func (a *FileAction) Run(ctx context.Context, conn model.Connection, conf model.
 	}
 	err = conn.CopyFile(ctx, f, stat.Size(), dest, mode)
 	if err != nil {
-		return "", fmt.Errorf("failed to copy file %q: %s", src, err)
+		return "", fmt.Errorf("failed to copy file %s to %s error: %v", src, dest, err)
 	}
 
 	if a.Owner != "" && a.Group != "" {

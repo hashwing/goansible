@@ -113,6 +113,9 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 	if t.Setface != nil {
 		action = t.Setface
 	}
+	if t.Directory != nil {
+		action = t.Directory
+	}
 	if action == nil {
 		return nil
 	}
