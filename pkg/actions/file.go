@@ -19,16 +19,29 @@ type FileAction struct {
 	Mode  string `yaml:"mode"`
 }
 
+func (a *FileAction) parse(vars *model.Vars) (*FileAction, error) {
+	var gerr error
+	defer func() {
+		if err := recover(); err != nil {
+			gerr = err.(error)
+		}
+	}()
+
+	return &FileAction{
+		Src:   common.ParseTplWithPanic(a.Src, vars),
+		Dest:  common.ParseTplWithPanic(a.Dest, vars),
+		Owner: common.ParseTplWithPanic(a.Owner, vars),
+		Group: common.ParseTplWithPanic(a.Group, vars),
+		Mode:  common.ParseTplWithPanic(a.Mode, vars),
+	}, gerr
+}
+
 func (a *FileAction) Run(ctx context.Context, conn model.Connection, conf model.Config, vars *model.Vars) (string, error) {
-	src, err := common.ParseTpl(a.Src, vars)
+	parseAction, err := a.parse(vars)
 	if err != nil {
 		return "", err
 	}
-	dest, err := common.ParseTpl(a.Dest, vars)
-	if err != nil {
-		return "", err
-	}
-	f, err := os.Open(filepath.Join(conf.PlaybookFolder, src))
+	f, err := os.Open(filepath.Join(conf.PlaybookFolder, parseAction.Src))
 	if err != nil {
 		return "", fmt.Errorf("failed to open source file: %s", err)
 	}
@@ -37,25 +50,25 @@ func (a *FileAction) Run(ctx context.Context, conn model.Connection, conf model.
 		return "", fmt.Errorf("failed to get source file info: %s", err)
 	}
 
-	mode := a.Mode
+	mode := parseAction.Mode
 	if mode == "" {
 		mode = "0644"
 	}
-	err = conn.CopyFile(ctx, f, stat.Size(), dest, mode)
+	err = conn.CopyFile(ctx, f, stat.Size(), parseAction.Dest, mode)
 	if err != nil {
-		return "", fmt.Errorf("failed to copy file %s to %s error: %v", src, dest, err)
+		return "", fmt.Errorf("failed to copy file %s to %s error: %v", parseAction.Src, parseAction.Dest, err)
 	}
 
-	if a.Owner != "" && a.Group != "" {
+	if parseAction.Owner != "" && parseAction.Group != "" {
 		output, err := conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
 			return sess.Start(
-				fmt.Sprintf("chown %s:%s %s", a.Owner, a.Group, dest),
+				fmt.Sprintf("chown %s:%s %s", parseAction.Owner, parseAction.Group, parseAction.Dest),
 			), nil
 		})
 		if err != nil {
 			return output, fmt.Errorf(
 				"failed to set the file owner on %q to %s:%s: %s",
-				dest, a.Owner, a.Group, err,
+				parseAction.Dest, parseAction.Owner, parseAction.Group, err,
 			)
 		}
 	}
