@@ -89,6 +89,19 @@ func ParseTpl(tpl string, vars *model.Vars) (string, error) {
 	return b.String(), err
 }
 
+func ParseTplWithPanic(tpl string, vars *model.Vars) string {
+	tmpl, err := template.New("tpl").Parse(tpl)
+	if err != nil {
+		panic(err)
+	}
+	var b bytes.Buffer
+	err = tmpl.Execute(&b, vars)
+	if err != nil {
+		panic(err)
+	}
+	return b.String()
+}
+
 // MergeValues Merges source and destination map, preferring values from the source map
 func MergeValues(dest map[string]interface{}, src map[string]interface{}) map[string]interface{} {
 	for k, v := range src {
