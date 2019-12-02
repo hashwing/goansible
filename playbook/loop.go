@@ -12,8 +12,7 @@ func Loop(loop interface{}, vars *model.Vars) []interface{} {
 	case reflect.Slice:
 		return loop.([]interface{})
 	case reflect.String:
-
-		v, res := common.GetVar(loop.(string), vars)
+		v, res := common.GetVar(common.ParseTplWithPanic(loop.(string), vars), vars)
 		if res {
 			return v.([]interface{})
 		}
