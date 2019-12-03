@@ -94,28 +94,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 
 func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
 	fmt.Println(termutil.Full("Task [%s] ", "*", t.Name))
-	var action model.Action
-	if t.FileAction != nil {
-		action = t.FileAction
-	}
-	if t.Template != nil {
-		action = t.Template
-	}
-	if t.ShellAction != nil {
-		action = t.ShellAction
-	}
-	if t.Regexp != nil {
-		action = t.Regexp
-	}
-	if t.Until != nil {
-		action = t.Until
-	}
-	if t.Setface != nil {
-		action = t.Setface
-	}
-	if t.Directory != nil {
-		action = t.Directory
-	}
+	action := t.Action()
 	if action == nil {
 		return nil
 	}

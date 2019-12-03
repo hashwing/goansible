@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/actions"
 	"gopkg.in/yaml.v2"
 )
@@ -32,6 +33,32 @@ type Task struct {
 	When        string                   `yaml:"when"`
 	Include     string                   `yaml:"include"`
 	IgnoreError bool                     `yaml:"ignore_error"`
+}
+
+func (t *Task) Action() model.Action {
+	var action model.Action
+	if t.FileAction != nil {
+		action = t.FileAction
+	}
+	if t.Template != nil {
+		action = t.Template
+	}
+	if t.ShellAction != nil {
+		action = t.ShellAction
+	}
+	if t.Regexp != nil {
+		action = t.Regexp
+	}
+	if t.Until != nil {
+		action = t.Until
+	}
+	if t.Setface != nil {
+		action = t.Setface
+	}
+	if t.Directory != nil {
+		action = t.Directory
+	}
+	return action
 }
 
 func UnmarshalFromFile(playbookFile string) ([]Playbook, error) {

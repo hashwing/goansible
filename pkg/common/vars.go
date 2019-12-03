@@ -32,17 +32,24 @@ func GetVar(s string, vars *model.Vars) (interface{}, bool) {
 			return nil, false
 		}
 		for i := 1; i < len(rs); i++ {
+			key := rs[i]
 			if i == len(rs)-1 {
-				if _, ok := p[rs[i]]; ok {
-					return p[rs[i]], true
+				if _, ok := p[key]; ok {
+					return p[key], true
 				}
 			}
-			if _, ok := p[rs[i]]; !ok {
+			if _, ok := p[key]; !ok {
 				return nil, false
 			}
-			if _, ok := p[rs[i]].(map[string]interface{}); !ok {
-				return nil, false
+			if nextp, ok := p[key].(map[string]interface{}); ok {
+				p = nextp
+				continue
 			}
+			if nextp, ok := p[key].(map[interface{}]interface{}); ok {
+				p = mapconv(nextp)
+				continue
+			}
+			return nil, false
 		}
 	}
 	return nil, false
@@ -72,11 +79,23 @@ func SetVar(s string, value interface{}, vars *model.Vars) {
 				p[rs[i]] = make(map[string]interface{})
 			}
 			if _, ok := p[rs[i]].(map[string]interface{}); !ok {
-				p[rs[i]] = make(map[string]interface{})
+				if v, ok := p[rs[i]].(map[interface{}]interface{}); ok {
+					p[rs[i]] = mapconv(v)
+				} else {
+					p[rs[i]] = make(map[string]interface{})
+				}
 			}
 			p = p[rs[i]].(map[string]interface{})
 		}
 	}
+}
+
+func mapconv(s map[interface{}]interface{}) map[string]interface{} {
+	res := make(map[string]interface{})
+	for k, v := range s {
+		res[k.(string)] = v
+	}
+	return res
 }
 
 func ParseTpl(tpl string, vars *model.Vars) (string, error) {
