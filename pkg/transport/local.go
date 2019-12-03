@@ -116,7 +116,7 @@ func (conn *LocalCmd) Exec(ctx context.Context, withTerminal bool, fn model.Exec
 }
 
 func (conn *LocalCmd) CopyFile(ctx context.Context, src io.Reader, size int64, dest, mode string) error {
-	modeInt, err := strconv.Atoi(mode)
+	modeInt, err := strconv.ParseInt(mode, 8, 32)
 	if err != nil {
 		return err
 	}
