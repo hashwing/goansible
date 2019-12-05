@@ -102,10 +102,6 @@ func (g *fileInv) Groups() (map[string]*model.Group, error) {
 			return
 		}
 
-		if opt == childrenOpt {
-
-		}
-
 		switch opt {
 		case childrenOpt:
 			ps := groupMap[groupName].Parents
@@ -177,6 +173,7 @@ func (g *fileInv) Groups() (map[string]*model.Group, error) {
 					groupMap[name].Hosts[hn].HostVars[allk] = allv
 				}
 			}
+			groupMap[name].Hosts[hn].HostVars["ansible_hostname"] = hn
 			for gk, gv := range g.GroupVars {
 				groupMap[name].Hosts[hn].HostVars[gk] = gv
 			}
