@@ -26,6 +26,7 @@ func (s *CmdSession) Start(cmd string) error {
 	var stdout bytes.Buffer
 	sess := exec.CommandContext(s.ctx, "sh", "-c", cmd)
 	sess.Stdout = &stdout
+	sess.Stderr = &stdout
 	s.output = &stdout
 	s.sess = sess
 	stdin, err := sess.StdinPipe()

@@ -3,9 +3,11 @@ package playbook
 import (
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/actions"
+	"github.com/hashwing/goansible/pkg/termutil"
 	"gopkg.in/yaml.v2"
 )
 
@@ -16,6 +18,7 @@ type Playbook struct {
 	ImportPlaybook string                 `yaml:"import_playbook"`
 	IncludeValues  []string               `yaml:"include_values"`
 	Tasks          []Task                 `yaml:"tasks"`
+	Tag            string                 `yaml:"tag"`
 }
 
 type Task struct {
@@ -33,6 +36,7 @@ type Task struct {
 	When        string                   `yaml:"when"`
 	Include     string                   `yaml:"include"`
 	IgnoreError bool                     `yaml:"ignore_error"`
+	Tag         string                   `yaml:"tag"`
 }
 
 func (t *Task) Action() model.Action {
@@ -74,4 +78,36 @@ func UnmarshalFromFile(playbookFile string) ([]Playbook, error) {
 	}
 
 	return playbooks, nil
+}
+
+func Run(cfg model.Config, ps []Playbook, inv model.Inventory) error {
+	gs, err := inv.Groups()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			termutil.Errorf("erorr: %v", err)
+		}
+	}()
+	start := time.Now()
+	for _, p := range ps {
+		err := p.Run(gs, cfg)
+		if err != nil {
+			return err
+		}
+	}
+	end := time.Now()
+	cost := end.Unix() - start.Unix()
+	var m int64
+	var s = cost
+	if cost > 120 {
+		s = cost % 60
+		m = cost / 60
+	}
+	termutil.FullInfo("Finish playbooks ", "=")
+	termutil.Printf("start: %v", start)
+	termutil.Printf("end: %v", end)
+	termutil.Printf("cost: %dm%ds\n", m, s)
+	return nil
 }

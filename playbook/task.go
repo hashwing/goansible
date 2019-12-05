@@ -23,6 +23,10 @@ const (
 
 func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 	termutil.FullInfo("Playbook [%s] ", "=", p.Name)
+	if p.Tag != "" && p.Tag != conf.Tag && conf.Tag != "" {
+		termutil.Printf("slip: tag filter\n")
+		return nil
+	}
 	if p.ImportPlaybook != "" {
 		pls, err := UnmarshalFromFile(conf.PlaybookFolder + "/" + p.ImportPlaybook)
 		if err != nil {
@@ -94,6 +98,10 @@ func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 
 func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
 	fmt.Println(termutil.Full("Task [%s] ", "*", t.Name))
+	if t.Tag != "" && t.Tag != conf.Tag && conf.Tag != "" {
+		termutil.Printf("slip: tag filter\n")
+		return nil
+	}
 	action := t.Action()
 	if action == nil {
 		return nil
@@ -131,7 +139,7 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 				}
 				stdout, err := action.Run(context.Background(), conn, conf, vars)
 				if err != nil {
-					termutil.Errorf("error: [%s], msg: %v", h.Name, err)
+					termutil.Errorf("error: [%s], msg: %v, %s", h.Name, err, stdout)
 					globalErr = err
 					return
 				}
@@ -142,14 +150,14 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 						case "hostvars":
 							groupVars[h.Name][rs[1]] = strings.TrimSuffix(stdout, "\r\n")
 						case "values":
-							p.Vars[rs[1]] = strings.TrimSuffix(stdout, "\r\n")
+							common.SetVar(t.StdOut, strings.TrimSuffix(stdout, "\r\n"), vars)
 						}
 					}
 				}
 				if t.Debug != "" {
 					info, err := common.ParseTpl(t.Debug, vars)
 					if err != nil {
-						termutil.Errorf("error: [%s], msg: %v", h.Name, err)
+						termutil.Errorf("error: [%s], msg: %v, %s", h.Name, err, info)
 						globalErr = err
 						return
 					}
