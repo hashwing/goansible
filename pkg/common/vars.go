@@ -124,7 +124,8 @@ func ParseTplWithPanic(tpl string, vars *model.Vars) string {
 func newTpl() *template.Template {
 	tmpl := template.New("tpl")
 	tmpl = tmpl.Funcs(template.FuncMap{
-		"join": Join,
+		"join":      join,
+		"unescaped": unescaped,
 	})
 	return tmpl
 }

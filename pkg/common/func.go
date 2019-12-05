@@ -1,13 +1,20 @@
 package common
 
-func Join(a interface{}, step string) string {
+import (
+	"html/template"
+)
+
+func join(a interface{}, step string) interface{} {
 	s := a.([]interface{})
 	res := ""
 	for i, item := range s {
+
 		res += item.(string)
 		if i < len(s)-1 {
-			res += ","
+			res += step
 		}
 	}
-	return res
+	return template.HTML(res)
 }
+
+func unescaped(x string) interface{} { return template.HTML(x) }
