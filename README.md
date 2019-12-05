@@ -17,7 +17,7 @@ go build -v
 
 ```
 
-playbook <your playbook dir>
+playbook -workdir <your playbook dir> -tag <your tag>
 
 ```
 

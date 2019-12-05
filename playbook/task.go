@@ -62,7 +62,12 @@ func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 	if err != nil {
 		return err
 	}
-	common.MergeValues(p.Vars, values)
+	if p.Vars == nil {
+		p.Vars = make(map[string]interface{})
+	}
+	if values != nil {
+		common.MergeValues(p.Vars, values)
+	}
 
 	for _, t := range p.Tasks {
 		if t.Include != "" {
