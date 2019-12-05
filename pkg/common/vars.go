@@ -99,7 +99,7 @@ func mapconv(s map[interface{}]interface{}) map[string]interface{} {
 }
 
 func ParseTpl(tpl string, vars *model.Vars) (string, error) {
-	tmpl, err := template.New("tpl").Parse(tpl)
+	tmpl, err := newTpl().Parse(tpl)
 	if err != nil {
 		return "", err
 	}
@@ -109,7 +109,7 @@ func ParseTpl(tpl string, vars *model.Vars) (string, error) {
 }
 
 func ParseTplWithPanic(tpl string, vars *model.Vars) string {
-	tmpl, err := template.New("tpl").Parse(tpl)
+	tmpl, err := newTpl().Parse(tpl)
 	if err != nil {
 		panic(err)
 	}
@@ -119,6 +119,14 @@ func ParseTplWithPanic(tpl string, vars *model.Vars) string {
 		panic(err)
 	}
 	return b.String()
+}
+
+func newTpl() *template.Template {
+	tmpl := template.New("tpl")
+	tmpl = tmpl.Funcs(template.FuncMap{
+		"join": Join,
+	})
+	return tmpl
 }
 
 // MergeValues Merges source and destination map, preferring values from the source map
