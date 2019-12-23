@@ -1,6 +1,6 @@
 # GoAnsible
 
-使用golang 编写， 实现 ansible playbook 部分功能
+使用golang 编写， 实现 ansible playbook 部分功能，安装起来更简单，目的不在于替换ansible，而是代替某些复杂shell脚本（特别多机部署）。
 
 
 ## 编译
@@ -110,7 +110,7 @@ host2
 
 ## 使用教程
 
-goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的template；inventory 格式 和ansible 格式是一致的。在运行方面，goansible 默认以 index.yaml 作为入口。 
+goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的template；inventory 格式 和ansible 格式是差不多。在运行方面，goansible 默认以 index.yaml 作为入口，hosts 作为inventory。 
 
 ### playbook
 
@@ -258,7 +258,7 @@ goansible 分为三种种变量，一种全局变量values; 一种是主机变�
 
 ```
 
-* shell: 执行的命令，可以通过模板使用变量
+* shell: 执行的命令
 
 2、file
 
@@ -267,7 +267,113 @@ goansible 分为三种种变量，一种全局变量values; 一种是主机变�
   file:
     src: test.file
     dest: /tmp/test.file
+    mode: "0644"
+    owner: root
+    group: root
 
 ```
+
+复制文件到目标机器
+
+* src: 源文件（本地文件）路径
+
+* dest: 目标文件路径
+
+* mode: 文件权限，默认`0644`
+
+* owner: 文件用户，默认ssh 用户
+
+* group: 文件用户组，默认ssh 用户组
+
+3、template
+
+```yaml
+- name: copy file
+  template:
+    src: test.file
+    dest: /tmp/test.file
+    mode: "0755"
+    owner: root
+    group: root
+
+```
+
+根据模板生成文件，并复制文件到目标机器
+
+* src: 源文件（本地文件）路径
+
+* dest: 目标文件路径
+
+* mode: 文件权限，默认`0644`
+
+* owner: 文件用户，默认ssh 用户
+
+* group: 文件用户组，默认ssh 用户组
+
+4、directory
+
+```yaml
+
+- name: directory
+  directory:
+    path: /tmp/456
+    mode: "0755"
+    owner: root
+    group: root
+
+```
+
+新建文件夹
+
+* path: 文件夹路径
+
+* mode: 文件权限，默认`0755`
+
+* owner: 文件用户，默认ssh 用户
+
+* group: 文件用户组，默认ssh 用户组
+
+5、regexp
+
+```yaml
+
+- name: regexp
+  regexp:
+    src: abrrrc
+    exp: a(b{1})r(r{2})c
+    dst: values.reg.ddd
+
+```
+
+根据正则表达式匹配分割，并保存结果到变量中
+
+* src: 源字符串
+
+* exp: 正则表达式
+
+* dst: 保存结果变量名
+
+6、until
+
+```yaml
+- name: demo until
+  until:
+    shell: "ss -lnp|awk '{print $5}'|grep  -n :3000$"
+    match: ".+"
+    timeout: 300
+    interval: 10
+```
+
+循环执行命令，直到匹配到结果
+
+* shell: 执行shell命令
+
+* match: 对执行的命令输出结果匹配的正则表达式
+
+* timeout: 超时时间，默认300s
+
+* interval: 循环执行命令间隔，默认5s
+
+
 
 
