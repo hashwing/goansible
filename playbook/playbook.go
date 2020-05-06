@@ -91,11 +91,13 @@ func Run(cfg model.Config, ps []Playbook, inv model.Inventory) error {
 		}
 	}()
 	start := time.Now()
+	vars := make(map[string]interface{})
 	for _, p := range ps {
-		err := p.Run(gs, cfg)
+		err := p.Run(gs, vars, cfg)
 		if err != nil {
 			return err
 		}
+		vars = p.Vars
 	}
 	end := time.Now()
 	cost := end.Unix() - start.Unix()

@@ -9,9 +9,10 @@ import (
 )
 
 type RegexpAction struct {
-	Src string `yaml:"src"`
-	Exp string `yaml:"exp"`
-	Dst string `yaml:"dst"`
+	Src   string `yaml:"src"`
+	Exp   string `yaml:"exp"`
+	Dst   string `yaml:"dst"`
+	Split bool   `yaml:"split"`
 }
 
 func (a *RegexpAction) parse(vars *model.Vars) (*RegexpAction, error) {
@@ -22,9 +23,10 @@ func (a *RegexpAction) parse(vars *model.Vars) (*RegexpAction, error) {
 		}
 	}()
 	return &RegexpAction{
-		Src: common.ParseTplWithPanic(a.Src, vars),
-		Exp: common.ParseTplWithPanic(a.Exp, vars),
-		Dst: common.ParseTplWithPanic(a.Dst, vars),
+		Src:   common.ParseTplWithPanic(a.Src, vars),
+		Exp:   common.ParseTplWithPanic(a.Exp, vars),
+		Dst:   common.ParseTplWithPanic(a.Dst, vars),
+		Split: a.Split,
 	}, gerr
 }
 
@@ -34,6 +36,11 @@ func (a *RegexpAction) Run(ctx context.Context, conn model.Connection, conf mode
 		return "", err
 	}
 	vRegexp := regexp.MustCompile(newa.Exp)
+	if newa.Split {
+		vParams := vRegexp.Split(newa.Src, -1)
+		common.SetVar(newa.Dst, vParams, vars)
+		return "", nil
+	}
 	vParams := vRegexp.FindStringSubmatch(newa.Src)
 	common.SetVar(newa.Dst, vParams[1:], vars)
 	return "", nil

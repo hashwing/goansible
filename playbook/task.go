@@ -21,7 +21,7 @@ const (
 	sshPort = "ansible_ssh_port"
 )
 
-func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
+func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, conf model.Config) error {
 	termutil.FullInfo("Playbook [%s] ", "=", p.Name)
 	if p.Tag != "" && p.Tag != conf.Tag && conf.Tag != "" {
 		termutil.Printf("slip: tag filter\n")
@@ -33,10 +33,11 @@ func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 			return err
 		}
 		for _, pl := range pls {
-			err := pl.Run(gs, conf)
+			err := pl.Run(gs, vars, conf)
 			if err != nil {
 				return err
 			}
+			vars = pl.Vars
 		}
 		return nil
 	}
@@ -64,6 +65,9 @@ func (p *Playbook) Run(gs map[string]*model.Group, conf model.Config) error {
 	}
 	if p.Vars == nil {
 		p.Vars = make(map[string]interface{})
+	}
+	if vars != nil {
+		common.MergeValues(p.Vars, vars)
 	}
 	if values != nil {
 		common.MergeValues(p.Vars, values)
@@ -182,39 +186,47 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 var globalConns map[string]model.Connection = make(map[string]model.Connection)
 
 func initConn(gs map[string]*model.Group) error {
+	var wg sync.WaitGroup
+	var gerr error
+	wg.Add(len(gs["all"].Hosts))
 	for _, h := range gs["all"].Hosts {
-		if h.Name == "localhost" {
-			continue
-		}
-		host, ok := h.HostVars[sshHost]
-		if !ok {
-			return errors.New(h.Name + " ssh host undefine")
-		}
-		user, ok := h.HostVars[sshUser]
-		if !ok {
-			user = "root"
-		}
+		go func(h *model.Host) {
+			defer wg.Done()
+			if h.Name == "localhost" {
+				return
+			}
+			host, ok := h.HostVars[sshHost]
+			if !ok {
+				gerr = errors.New(h.Name + " ssh host undefine")
+			}
+			user, ok := h.HostVars[sshUser]
+			if !ok {
+				user = "root"
+			}
 
-		port, ok := h.HostVars[sshPort]
-		if !ok {
-			port = "22"
-		}
+			port, ok := h.HostVars[sshPort]
+			if !ok {
+				port = "22"
+			}
 
-		pwd, ok := h.HostVars[sshPwd]
-		if !ok {
-			pwd = ""
-		}
-		key, ok := h.HostVars[sshKey]
-		if !ok {
-			key = ""
-		}
-		conn, err := transport.Connect(user.(string), pwd.(string), key.(string), host.(string)+":"+port.(string))
-		if err != nil {
-			return err
-		}
-		globalConns[h.Name] = conn
+			pwd, ok := h.HostVars[sshPwd]
+			if !ok {
+				pwd = ""
+			}
+			key, ok := h.HostVars[sshKey]
+			if !ok {
+				key = ""
+			}
+			conn, err := transport.Connect(user.(string), pwd.(string), key.(string), host.(string)+":"+port.(string))
+			if err != nil {
+				gerr = err
+				return
+			}
+			globalConns[h.Name] = conn
+		}(h)
+		wg.Wait()
 	}
-	return nil
+	return gerr
 }
 
 func getConn(name string) (model.Connection, error) {

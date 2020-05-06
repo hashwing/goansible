@@ -110,9 +110,9 @@ func (conn *connection) Exec(ctx context.Context, withTerminal bool, fn model.Ex
 
 func (conn *connection) CopyFile(ctx context.Context, src io.Reader, size int64, dest, mode string) error {
 	_, err := conn.Exec(ctx, false, func(sess model.Session) (error, *errgroup.Group) {
-		dir, _ := filepath.Split(dest)
+		//dir, _ := filepath.Split(dest)
 		// Start scp receiver on the remote host
-		err := sess.Start("scp -qt " + dir)
+		err := sess.Start("scp -tr " + dest)
 		if err != nil {
 			return fmt.Errorf("failed to start scp receiver: %s", err), nil
 		}
@@ -130,7 +130,7 @@ func (conn *connection) CopyFile(ctx context.Context, src io.Reader, size int64,
 		return nil, &g
 	})
 	if err != nil {
-		return fmt.Errorf("failed to copy file %s to %s: %v", src, dest, err)
+		return fmt.Errorf("failed to copy file to %s: %v", dest, err)
 	}
 	return nil
 }

@@ -172,12 +172,12 @@ goansible 分为三种种变量，一种全局变量values; 一种是主机变�
 ```yaml
 
 - name: loop
-  shell: echo {{ Item }}
+  shell: echo {{ .Item }}
   loop:
     - a
     - b
 - name: loop values
-  shell: echo {{ Item.xxx }}
+  shell: echo {{ .Item.xxx }}
   loop: values.loops
 
 ```
@@ -345,6 +345,17 @@ goansible 分为三种种变量，一种全局变量values; 一种是主机变�
 
 ```
 
+```yaml
+
+- name: regexp
+  regexp:
+    src: abrrrc
+    exp: ","
+    dst: values.reg.ddd
+    split: true
+
+```
+
 根据正则表达式匹配分割，并保存结果到变量中
 
 * src: 源字符串
@@ -352,6 +363,8 @@ goansible 分为三种种变量，一种全局变量values; 一种是主机变�
 * exp: 正则表达式
 
 * dst: 保存结果变量名
+
+* split: 分割
 
 6、until
 
