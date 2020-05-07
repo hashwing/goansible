@@ -77,7 +77,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, 
 		if t.Include != "" {
 			if t.Tag != "" && t.Tag != conf.Tag && conf.Tag != "" {
 				termutil.Printf("slip: tag filter\n")
-				return nil
+				continue
 			}
 			itasks, err := FileToTasks(t.Include, conf)
 			if err != nil {
