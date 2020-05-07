@@ -224,8 +224,8 @@ func initConn(gs map[string]*model.Group) error {
 			}
 			globalConns[h.Name] = conn
 		}(h)
-		wg.Wait()
 	}
+	wg.Wait()
 	return gerr
 }
 
