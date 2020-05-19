@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"html/template"
+	"text/template"
 
 	"github.com/hashwing/goansible/model"
 )

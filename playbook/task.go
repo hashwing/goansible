@@ -23,7 +23,7 @@ const (
 
 func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, conf model.Config) error {
 	termutil.FullInfo("Playbook [%s] ", "=", p.Name)
-	if p.Tag != "" && p.Tag != conf.Tag && conf.Tag != "" {
+	if !TagFilter(conf.Tag, p.Tag) {
 		termutil.Printf("slip: tag filter\n")
 		return nil
 	}
@@ -75,7 +75,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, 
 
 	for _, t := range p.Tasks {
 		if t.Include != "" {
-			if t.Tag != "" && t.Tag != conf.Tag && conf.Tag != "" {
+			if !TagFilter(conf.Tag, t.Tag) {
 				termutil.Printf("slip: tag filter\n")
 				continue
 			}
@@ -111,7 +111,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, 
 
 func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
 	fmt.Println(termutil.Full("Task [%s] ", "*", t.Name))
-	if t.Tag != "" && t.Tag != conf.Tag && conf.Tag != "" {
+	if !TagFilter(conf.Tag, t.Tag) {
 		termutil.Printf("slip: tag filter\n")
 		return nil
 	}

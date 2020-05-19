@@ -17,7 +17,7 @@ go build -v
 
 ```
 
-playbook -workdir <your playbook dir> -tag <your tag>
+playbook -workdir <your playbook dir> -tag <your tag1>,<your tag2>
 
 ```
 
@@ -117,6 +117,7 @@ goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有r
 ```yaml
 - name: import playbook
   import_playbook: import.yaml
+  tag: tag1,tag2
 
 - name: example playbook
   hosts: test
@@ -143,6 +144,7 @@ goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有r
 
 * tasks： 包含一组任务
 
+* tag：标签过滤，多个标签使用","分割，
 
 ### task
 
@@ -159,13 +161,23 @@ goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有r
     dest: /tmp/test.tpl
 ```
 
-一、变量
+一、变量和函数
 
 goansible 分为三种种变量，一种全局变量values; 一种是主机变量hostvars；还有当前组所有主机变量groupvars （hostvars 是 groupvars 一个成员）。
 
 在模板中使用：`{{ .Values.xxx }}`、  `{{ .HostVars.xxx }}`、 `{{ .GroupVars.hostname.xxx }}`
 
 在赋值中使用： `values.xxx`、 `hostvars.xxx` 、`groupvars.hostname.xxx`
+
+goansible 内置部分函数：
+
+- join: 将数组合并成字符串，`{{ join .Values.testArray  "," }}`
+
+- join_groupvars: 将某个组里hostvar合并成字符串，`{{ join_groupvars  .GroupVars ansible_ssh_host ","}}`
+
+- plus: 加，`{{ plus .Values.a  .Values.b }}`
+
+- minus: 减，`{{ minus  .Values.a  .Values.b }}`
 
 二、循环
 
@@ -234,14 +246,14 @@ goansible 分为三种种变量，一种全局变量values; 一种是主机变�
 ```yaml
 - name: tag test
   shell: do something
-  tag: only_do
+  tag: tag1,tag2
 
 ```
 
 运行时设置标签： 
 
 ```
-./playbook -tag only_do
+./playbook -tag tag1,tag2
 
 ```
 
