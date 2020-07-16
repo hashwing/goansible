@@ -73,7 +73,7 @@ func (conn *connection) Close() error {
 }
 
 func (conn *connection) Exec(ctx context.Context, withTerminal bool, fn model.ExecCallbackFunc) (string, error) {
-	sess, err := newSession(ctx, conn.client, withTerminal)
+	sess, err := newSession(ctx, conn.client, withTerminal, fn)
 	if err != nil {
 		return "", fmt.Errorf("failed to create new session: %s", err)
 	}

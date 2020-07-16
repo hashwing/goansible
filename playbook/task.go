@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
@@ -45,7 +46,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, 
 		p.Hosts = "all"
 	}
 
-	err := initConn(gs)
+	err := initConn(gs, "all")
 	if err != nil {
 		return err
 	}
@@ -189,48 +190,57 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 
 var globalConns map[string]model.Connection = make(map[string]model.Connection)
 
-func initConn(gs map[string]*model.Group) error {
+func initConn(gs map[string]*model.Group, name string) error {
 	var wg sync.WaitGroup
 	var gerr error
-	wg.Add(len(gs["all"].Hosts))
-	for _, h := range gs["all"].Hosts {
+	wg.Add(len(gs[name].Hosts))
+	for _, h := range gs[name].Hosts {
 		go func(h *model.Host) {
 			defer wg.Done()
-			if h.Name == "localhost" {
-				return
-			}
-			host, ok := h.HostVars[sshHost]
-			if !ok {
-				gerr = errors.New(h.Name + " ssh host undefine")
-			}
-			user, ok := h.HostVars[sshUser]
-			if !ok {
-				user = "root"
-			}
-
-			port, ok := h.HostVars[sshPort]
-			if !ok {
-				port = "22"
-			}
-
-			pwd, ok := h.HostVars[sshPwd]
-			if !ok {
-				pwd = ""
-			}
-			key, ok := h.HostVars[sshKey]
-			if !ok {
-				key = ""
-			}
-			conn, err := transport.Connect(user.(string), pwd.(string), key.(string), host.(string)+":"+port.(string))
+			conn, err := connect(h)
 			if err != nil {
 				gerr = err
-				return
+				termutil.Errorf(err.Error())
+				os.Exit(-1)
 			}
 			globalConns[h.Name] = conn
 		}(h)
 	}
 	wg.Wait()
 	return gerr
+}
+
+func connect(h *model.Host) (model.Connection, error) {
+	if h.Name == "localhost" {
+		return nil, nil
+	}
+	host, ok := h.HostVars[sshHost]
+	if !ok {
+		return nil, errors.New(h.Name + " ssh host undefine")
+	}
+	user, ok := h.HostVars[sshUser]
+	if !ok {
+		user = "root"
+	}
+
+	port, ok := h.HostVars[sshPort]
+	if !ok {
+		port = "22"
+	}
+
+	pwd, ok := h.HostVars[sshPwd]
+	if !ok {
+		pwd = ""
+	}
+	key, ok := h.HostVars[sshKey]
+	if !ok {
+		key = ""
+	}
+	conn, err := transport.Connect(user.(string), pwd.(string), key.(string), host.(string)+":"+port.(string))
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
 }
 
 func getConn(name string) (model.Connection, error) {

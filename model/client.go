@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bufio"
 	"context"
 	"io"
 
@@ -8,7 +9,7 @@ import (
 )
 
 type Session interface {
-	Start(cmd string) error
+	Start(cmd string, logFunc ...func(scanner *bufio.Scanner)) error
 	Stdin() io.Writer
 	CloseStdin() error
 	Wait() error

@@ -1,11 +1,13 @@
 package transport
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/hashwing/goansible/model"
 	log "github.com/sirupsen/logrus"
@@ -22,12 +24,23 @@ type Session struct {
 }
 
 // Start starts a remote process in the current session
-func (s *Session) Start(cmd string) error {
+func (s *Session) Start(cmd string, logFunc ...func(scanner *bufio.Scanner)) error {
+	if len(logFunc) > 0 {
+		stdout, err := s.sshSess.StdoutPipe()
+		if err != nil {
+			return err
+		}
+		go logFunc[0](bufio.NewScanner(stdout))
+	}
 	err := s.sshSess.Start(cmd)
+	//wait stdout deal complete
+	if len(logFunc) > 0 {
+		time.Sleep(2 * time.Second)
+	}
 	return err
 }
 
-// wait blocks until the remote process completes or is cancelled
+//Wait wait blocks until the remote process completes or is cancelled
 func (s *Session) Wait() error {
 	return s.sshSess.Wait()
 }
@@ -70,15 +83,17 @@ func (s *Session) Close() error {
 }
 
 // newSession creates a new session
-func newSession(ctx context.Context, client *ssh.Client, withTerminal bool) (model.Session, error) {
+func newSession(ctx context.Context, client *ssh.Client, withTerminal bool, fn model.ExecCallbackFunc) (model.Session, error) {
 	sshSess, err := client.NewSession()
 	if err != nil {
 		client.Close()
 		return nil, fmt.Errorf("failed to initialise session: %s", err)
 	}
-
 	var b bytes.Buffer
-	sshSess.Stdout = &b
+	if fn == nil {
+		sshSess.Stdout = &b
+	}
+
 	stdin, err := sshSess.StdinPipe()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the session stdin pipe: %s", err)

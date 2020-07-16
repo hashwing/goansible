@@ -17,7 +17,7 @@ go build -v
 
 ```
 
-playbook -workdir <your playbook dir> -tag <your tag1>,<your tag2>
+playbook --workdir <your playbook dir> --tag <your tag1>,<your tag2>
 
 ```
 
@@ -110,7 +110,14 @@ host2
 
 ## 使用教程
 
-goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的template；inventory 格式 和ansible 格式是差不多。在运行方面，goansible 默认以 index.yaml 作为入口，hosts 作为inventory。 
+goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的template；inventory 格式 和ansible 格式是差不多。在运行方面，goansible 默认以 index.yaml 作为入口，hosts 作为inventory。
+
+### 直接运行命令
+
+```
+playbook run <group name> "<shell command>" [--workdir <your inventory dir>] 
+
+```
 
 ### playbook
 

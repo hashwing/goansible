@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -9,10 +10,12 @@ import (
 	"os/exec"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/hashwing/goansible/model"
 )
 
+//CmdSession ...
 type CmdSession struct {
 	sess            *exec.Cmd
 	ctx             context.Context
@@ -22,7 +25,7 @@ type CmdSession struct {
 }
 
 // Start starts a remote process in the current session
-func (s *CmdSession) Start(cmd string) error {
+func (s *CmdSession) Start(cmd string, logFunc ...func(scanner *bufio.Scanner)) error {
 	var stdout bytes.Buffer
 	sess := exec.CommandContext(s.ctx, "sh", "-c", cmd)
 	sess.Stdout = &stdout
@@ -34,14 +37,26 @@ func (s *CmdSession) Start(cmd string) error {
 		return err
 	}
 	s.stdin = stdin
-	return sess.Start()
+	if len(logFunc) > 0 {
+		stdout, err := sess.StdoutPipe()
+		if err != nil {
+			return err
+		}
+		go logFunc[0](bufio.NewScanner(stdout))
+	}
+	err = sess.Start()
+	if len(logFunc) > 0 {
+		time.Sleep(2 * time.Second)
+	}
+	return err
 }
 
-// wait blocks until the remote process completes or is cancelled
+//Wait wait blocks until the remote process completes or is cancelled
 func (s *CmdSession) Wait() error {
 	return s.sess.Wait()
 }
 
+//Output ...
 func (s *CmdSession) Output() string {
 	return s.output.String()
 }
@@ -60,7 +75,7 @@ func (s *CmdSession) CloseStdin() error {
 	return err
 }
 
-// close closes the current session
+//Close close closes the current session
 func (s *CmdSession) Close() error {
 	err := s.CloseStdin()
 	if err != nil {
@@ -73,17 +88,21 @@ func newCmdSession(ctx context.Context) *CmdSession {
 	return &CmdSession{ctx: ctx}
 }
 
+//LocalCmd local command
 type LocalCmd struct {
 }
 
+//ConnectCmd ...
 func ConnectCmd() model.Connection {
 	return &LocalCmd{}
 }
 
+//Close ...
 func (conn *LocalCmd) Close() error {
 	return nil
 }
 
+//Exec ...
 func (conn *LocalCmd) Exec(ctx context.Context, withTerminal bool, fn model.ExecCallbackFunc) (string, error) {
 	sess := newCmdSession(ctx)
 	defer sess.Close()
@@ -116,6 +135,7 @@ func (conn *LocalCmd) Exec(ctx context.Context, withTerminal bool, fn model.Exec
 	return sess.Output(), ctx.Err()
 }
 
+//CopyFile ...
 func (conn *LocalCmd) CopyFile(ctx context.Context, src io.Reader, size int64, dest, mode string) error {
 	modeInt, err := strconv.ParseInt(mode, 8, 32)
 	if err != nil {
