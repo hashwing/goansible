@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/cheggaaa/pb/v3 v3.0.2
+	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/mattn/go-runewidth v0.0.6
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v1.0.0

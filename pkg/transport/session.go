@@ -31,6 +31,10 @@ func (s *Session) Start(cmd string, logFunc ...func(scanner *bufio.Scanner)) err
 			return err
 		}
 		go logFunc[0](bufio.NewScanner(stdout))
+	} else {
+		var b bytes.Buffer
+		s.sshSess.Stdout = &b
+		s.output = &b
 	}
 	err := s.sshSess.Start(cmd)
 	//wait stdout deal complete
@@ -89,10 +93,10 @@ func newSession(ctx context.Context, client *ssh.Client, withTerminal bool, fn m
 		client.Close()
 		return nil, fmt.Errorf("failed to initialise session: %s", err)
 	}
-	var b bytes.Buffer
-	if fn == nil {
-		sshSess.Stdout = &b
-	}
+	// var b bytes.Buffer
+	// if stdout {
+	// 	sshSess.Stdout = &b
+	// }
 
 	stdin, err := sshSess.StdinPipe()
 	if err != nil {
@@ -114,7 +118,7 @@ func newSession(ctx context.Context, client *ssh.Client, withTerminal bool, fn m
 
 	// If requested, send SIGINT to the remote process and close the session
 	quitChan := make(chan struct{})
-	sess := Session{sshSess: sshSess, stdin: stdin, output: &b, sigintHandlerQuitChan: quitChan}
+	sess := Session{sshSess: sshSess, stdin: stdin, sigintHandlerQuitChan: quitChan}
 	go func() {
 		select {
 		case <-ctx.Done():
