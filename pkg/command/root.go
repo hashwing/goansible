@@ -19,7 +19,7 @@ func NewRoot() {
 	var rootCmd = &cobra.Command{
 		Use: "goansible",
 		Run: func(cmd *cobra.Command, args []string) {
-			inv, err := inventory.NewFile(cfg.PlaybookFolder + "/hosts")
+			inv, err := inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
 			if err != nil {
 				log.Error(err)
 				os.Exit(-1)
@@ -37,11 +37,13 @@ func NewRoot() {
 		},
 	}
 	workdir := rootCmd.PersistentFlags().String("workdir", ".", "run playbook in specially dir")
+	invFile := rootCmd.PersistentFlags().String("i", "values.yaml", "specify inventory file in a YAML file")
 	tag := rootCmd.PersistentFlags().String("tag", "", "use to tag filter")
 	workFolder := strings.Replace(*workdir, "\\", "/", -1)
 	cfg = model.Config{
 		PlaybookFolder: workFolder,
 		Tag:            *tag,
+		InvFile:        *invFile,
 	}
 	rootCmd.AddCommand(newRunShellCmd())
 	if err := rootCmd.Execute(); err != nil {

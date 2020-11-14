@@ -85,6 +85,10 @@ func Run(cfg model.Config, ps []Playbook, inv model.Inventory) error {
 	if err != nil {
 		return err
 	}
+	customVars, err := inv.Vars()
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := recover(); err != nil {
 			termutil.Errorf("erorr: %v", err)
@@ -93,7 +97,7 @@ func Run(cfg model.Config, ps []Playbook, inv model.Inventory) error {
 	start := time.Now()
 	vars := make(map[string]interface{})
 	for _, p := range ps {
-		err := p.Run(gs, vars, cfg)
+		err := p.Run(gs, customVars, vars, cfg)
 		if err != nil {
 			return err
 		}

@@ -1,0 +1,20 @@
+groups:
+  all:
+    host1:
+      ansible_ssh_host: "192.168.1.1"
+      ansible_ssh_port: "22"
+      ansible_ssh_user: root
+      ansible_ssh_pass: "123456"
+      ansible_ssh_key: ""
+    host2:
+      ansible_ssh_host: "192.168.1.2"
+      ansible_ssh_port: "22"
+      ansible_ssh_user: root
+      ansible_ssh_pass: "123456"
+      ansible_ssh_key: ""
+  test:
+     host1: {}
+     host2: {}
+vars: {}
+
+    

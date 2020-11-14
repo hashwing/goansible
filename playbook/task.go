@@ -22,7 +22,7 @@ const (
 	sshPort = "ansible_ssh_port"
 )
 
-func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, conf model.Config) error {
+func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interface{}, vars map[string]interface{}, conf model.Config) error {
 	termutil.FullInfo("Playbook [%s] ", "=", p.Name)
 	if !TagFilter(conf.Tag, p.Tag) {
 		termutil.Printf("slip: tag filter\n")
@@ -34,7 +34,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, 
 			return err
 		}
 		for _, pl := range pls {
-			err := pl.Run(gs, vars, conf)
+			err := pl.Run(gs, customVars, vars, conf)
 			if err != nil {
 				return err
 			}
@@ -72,6 +72,9 @@ func (p *Playbook) Run(gs map[string]*model.Group, vars map[string]interface{}, 
 	}
 	if values != nil {
 		common.MergeValues(p.Vars, values)
+	}
+	if customVars != nil {
+		common.MergeValues(p.Vars, customVars)
 	}
 
 	for _, t := range p.Tasks {

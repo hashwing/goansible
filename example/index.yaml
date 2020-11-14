@@ -1,0 +1,12 @@
+- name: test
+  hosts: test
+  vars:
+    test: 
+      - dddd
+      - ffff
+  tag: dd
+  tasks:
+    - name: shell
+      shell: ls -lh /root
+      stdout: hostvars.stdout
+      debug: "{{ .HostVars.stdout }}"

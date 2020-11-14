@@ -11,9 +11,9 @@ import (
 
 func newRunShellCmd() *cobra.Command {
 	return &cobra.Command{
-		Use: "run",
+		Use: "run group_name shell_command",
 		Run: func(cmd *cobra.Command, args []string) {
-			inv, err := inventory.NewFile(cfg.PlaybookFolder + "/hosts")
+			inv, err := inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
 			if err != nil {
 				log.Error(err)
 				os.Exit(-1)

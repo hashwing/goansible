@@ -30,96 +30,42 @@ playbook run <group name> "<shell command>" [--workdir <your inventory dir>]
 
 ```
 
-## Host
-
-```
-host1 ansible_ssh_host=192.168.2.130 ansible_ssh_user=root ansible_ssh_pass=********** ansible_ssh_key=/root/.ssh/id_rsa
-host2 ansible_ssh_host=192.168.2.132 ansible_ssh_user=root ansible_ssh_pass=********** ansible_ssh_key=/root/.ssh/id_rsa
-
-[test]
-host1 k8s_master=yes
-host2
-
-```
-
-## Playbook
-
-```yaml
-- name: import playbook
-  import_playbook: common.yaml
-
-- name: test
-  hosts: test
-  vars:
-    cluster_join_script: ""
-    tests:
-      - a: adddd
-        b: b
-      - a: c
-        b: e
-  include_values:
-    - Values.yaml
-  tasks:
-    - name: debug value file
-      shell: echo nnnn
-      debug: "{{.Values.value_file}},{{ $test := index .Values.tests 0 }} {{ $test.a }}"
-    - name: Copy file
-      file:
-        src: file.yaml
-        dest: /root/file.yaml
-    - name: test shell
-      shell: echo {{ .HostVars.ansible_ssh_host }} > b.yml
-    - name: stdout shell
-      shell: echo {{ .HostVars.ansible_ssh_host }}
-      stdout: hostvars.ip
-    - name: stdout res
-      shell: echo {{ .HostVars.ip }} > a.yaml
-    - name: test when
-      shell: echo hello > a.yaml
-      when: hostvars.k8s_master
-    - name: test template
-      template:
-        src: tpl.yaml
-        dest: /root/tpl.yaml
-    - name: get script
-      shell: kubeadm token create --print-join-command
-      stdout: values.cluster_join_script
-      when: hostvars.k8s_master
-    - name: stdout res
-      shell: echo {{ .Values.cluster_join_script }} > join.yaml
-      when: hostvars.k8s_master
-    - name: regexp
-      regexp:
-        src: abrrrc
-        exp: a(b{1})r(r{2})c
-        dst: values.reg.ddd
-      debug: "{{.Values.reg.ddd }}"
-      
-    - name: loop
-      shell: echo "hello"
-      loop:
-        - a
-        - b
-    - name: loop 2
-      shell: echo {{ .Item.a }} >> loop.yaml
-      loop: values.tests
-    - name: test ignore error
-      shell: testddd
-      ignore_error: true
-    - name: setface
-      setface: values.face=success
-    - name: until 
-      until:
-        port: 3000
-        timeout: 10
-    - name: include tasks
-      include: include.yaml
-
-```
 
 ## 使用教程
 
-goansible playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的template；inventory 格式 和ansible 格式是差不多。在运行方面，goansible 默认以 index.yaml 作为入口，hosts 作为inventory。
+playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的 template
+
+inventory 从0.0.2版本开始使用 yaml 格式定义，定义主机属性和分组以及自定义变量
+
+### inventory
+
+```yaml
+
+groups:
+  all:
+    host1:
+      ansible_ssh_host: "192.168.1.100"
+      ansible_ssh_port: "22"
+      ansible_ssh_user: root
+      ansible_ssh_pass: "123456"
+      ansible_ssh_key: ""
+    host2:
+      ansible_ssh_host: "192.168.1.101"
+      ansible_ssh_port: "22"
+      ansible_ssh_user: root
+      ansible_ssh_pass: "123456"
+      ansible_ssh_key: ""
+  test:
+     host1: {}
+     host2: {}
+vars: 
+  key1: value1
+
+```
+
+- groups： 定义主机属性和分组
+
+- vars： 自定义变量，可以通过 `{{ .Values.key1 }}` 获取 
 
 
 ### playbook
@@ -229,7 +175,7 @@ goansible 内置部分函数：
 - name: stdout
   shell: echo "stdout result"
   stdout: hostvars.stdout
-  debug: {{ .hostvars.stdout }}
+  debug: {{ .HostVars.stdout }}
 
 ```
 

@@ -34,6 +34,10 @@ func NewFile(path string) (model.Inventory, error) {
 	return &fileInv{path: path}, nil
 }
 
+func (g *fileInv) Vars() (map[string]interface{}, error) {
+	return make(map[string]interface{}), nil
+}
+
 // GetGroup get group struct by inventory file
 func (g *fileInv) Groups() (map[string]*model.Group, error) {
 	groupMap := make(map[string]*group)

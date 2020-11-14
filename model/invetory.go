@@ -14,4 +14,5 @@ type Group struct {
 
 type Inventory interface {
 	Groups() (map[string]*Group, error)
+	Vars() (map[string]interface{}, error)
 }
