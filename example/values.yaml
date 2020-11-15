@@ -16,5 +16,3 @@ groups:
      host1: {}
      host2: {}
 vars: {}
-
-    

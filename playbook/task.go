@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 
@@ -114,7 +113,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 }
 
 func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
-	fmt.Println(termutil.Full("Task [%s] ", "*", t.Name))
+	termutil.FullPrintf("Task [%s] ", "*", t.Name)
 	if !TagFilter(conf.Tag, t.Tag) {
 		termutil.Printf("slip: tag filter\n")
 		return nil
@@ -204,7 +203,7 @@ func initConn(gs map[string]*model.Group, name string) error {
 			if err != nil {
 				gerr = err
 				termutil.Errorf(err.Error())
-				os.Exit(-1)
+				return
 			}
 			globalConns[h.Name] = conn
 		}(h)

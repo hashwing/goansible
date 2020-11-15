@@ -31,6 +31,27 @@ playbook run <group name> "<shell command>" [--workdir <your inventory dir>]
 ```
 
 
+### 编译桌面客户端
+
+`windows`
+
+```
+cd cmd/desktop/
+
+go build -ldflags "-s -w -H=windowsgui"
+
+```
+
+`linux`
+
+```
+cd cmd/desktop/
+
+go build  -v
+
+```
+
+
 ## 使用教程
 
 playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的 template
