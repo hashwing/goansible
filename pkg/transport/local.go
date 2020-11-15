@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -28,6 +29,9 @@ type CmdSession struct {
 func (s *CmdSession) Start(cmd string, logFunc ...func(scanner *bufio.Scanner)) error {
 	var stdout bytes.Buffer
 	sess := exec.CommandContext(s.ctx, "sh", "-c", cmd)
+	if runtime.GOOS == "windows" {
+		sess = exec.CommandContext(s.ctx, "cmd", "/c", cmd)
+	}
 	sess.Stdout = &stdout
 	sess.Stderr = &stdout
 	s.output = &stdout

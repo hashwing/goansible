@@ -59,6 +59,7 @@ func (g *yamlInv) Groups() (map[string]*model.Group, error) {
 			for k, v := range hostVars {
 				vars[k] = v
 			}
+			vars["ansible_hostname"] = hostName
 			host := &model.Host{
 				Name:     hostName,
 				HostVars: vars,

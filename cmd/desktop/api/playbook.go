@@ -16,21 +16,14 @@ var (
 	defaultValues = `
 groups:
   all:
-    host1:
-        ansible_ssh_host: "192.168.1.1"
-        ansible_ssh_port: "22"
-        ansible_ssh_user: root
-        ansible_ssh_pass: "123456"
-        ansible_ssh_key: ""
-    host2:
-        ansible_ssh_host: "192.168.1.2"
-        ansible_ssh_port: "22"
-        ansible_ssh_user: root
-        ansible_ssh_pass: "123456"
+    localhost:
+        ansible_ssh_host: ""
+        ansible_ssh_port: ""
+        ansible_ssh_user: ""
+        ansible_ssh_pass: ""
         ansible_ssh_key: ""
   test:
-    host1: {}
-    host2: {}
+    localhost: {}
 vars: {}
 `
 
@@ -43,8 +36,8 @@ vars: {}
     - ffff
   tag: dd
   tasks:
-  - name: shell
-    shell: ls -lh /root
+  - name: Exec Command
+    shell: echo hello world
     stdout: hostvars.stdout
     debug: "{{ .HostVars.stdout }}"
 `
