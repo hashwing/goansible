@@ -1,6 +1,15 @@
 # GoAnsible
 
-使用golang 编写， 实现 ansible playbook 部分功能，安装起来更简单，目的不在于替换ansible，而是代替某些复杂shell脚本（特别多机部署）。
+使用golang 编写， 实现 ansible playbook 部分功能，安装起来更简单，目的不在于替换ansible，而是代替某些复杂shell脚本（特别多机部署）。并且从 `V0.0.2` 开始提供桌面客户端。
+
+
+**Playbook 管理界面**
+
+![playbook](./docs/playbook.png)
+
+**运行日志**
+
+![log](./docs/log.png)
 
 
 ## 编译
