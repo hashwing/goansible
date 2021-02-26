@@ -58,6 +58,5 @@ func getArgs() (args []string) {
 	if runtime.GOOS == "linux" {
 		args = append(args, "--class=Lorca")
 	}
-	//args = append(args, "--headless")
 	return args
 }

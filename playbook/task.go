@@ -124,7 +124,11 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(len(group.Hosts))
+	if t.Once {
+		wg.Add(1)
+	} else {
+		wg.Add(len(group.Hosts))
+	}
 	var globalErr error
 
 	for _, h := range group.Hosts {
@@ -185,6 +189,9 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 			}
 			termutil.Successf("success: [%s]", h.Name)
 		}(h)
+		if t.Once {
+			break
+		}
 	}
 	wg.Wait()
 	return globalErr

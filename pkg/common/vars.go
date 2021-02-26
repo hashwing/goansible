@@ -153,3 +153,11 @@ func MergeValues(dest map[string]interface{}, src map[string]interface{}) map[st
 	}
 	return dest
 }
+
+//ParseArray parse array
+func ParseArray(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	return strings.Split(s, ",")
+}

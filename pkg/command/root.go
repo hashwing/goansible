@@ -3,7 +3,6 @@ package command
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/inventory"
@@ -36,15 +35,11 @@ func NewRoot() {
 			}
 		},
 	}
-	workdir := rootCmd.PersistentFlags().String("workdir", ".", "run playbook in specially dir")
-	invFile := rootCmd.PersistentFlags().String("i", "values.yaml", "specify inventory file in a YAML file")
-	tag := rootCmd.PersistentFlags().String("tag", "", "use to tag filter")
-	workFolder := strings.Replace(*workdir, "\\", "/", -1)
-	cfg = model.Config{
-		PlaybookFolder: workFolder,
-		Tag:            *tag,
-		InvFile:        *invFile,
-	}
+	cfg = model.Config{}
+	rootCmd.PersistentFlags().StringVar(&cfg.PlaybookFolder, "workdir", ".", "run playbook in specially dir")
+	rootCmd.PersistentFlags().StringVar(&cfg.InvFile, "i", "values.yaml", "specify inventory file in a YAML file")
+	rootCmd.PersistentFlags().StringVar(&cfg.Tag, "tag", "", "use to tag filter")
+
 	rootCmd.AddCommand(newRunShellCmd())
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

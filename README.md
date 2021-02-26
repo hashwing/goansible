@@ -385,6 +385,34 @@ goansible 内置部分函数：
 
 * interval: 循环执行命令间隔，默认5s
 
+7、cert 证书生成
+
+```yaml
+- name: 生成CA
+  cert:
+    crt_path: root.crt
+    key_path: root.key
+    is_ca: "true"
+    country: CN
+    organization: k8s
+    organizational_unit: opsnull
+    expires: 100y
+- name: 生成证书
+  cert:
+    root_crt_path: root.crt
+    root_key_path: root.key
+    crt_path: test.crt
+    key_path: test.key
+    is_ca: "false"
+    common_name: kubernetes-master
+    country: CN
+    organization: k8s
+    organizational_unit: opsnull
+    expires: 100y
+    ip_addresses: "127.0.0.1,192.168.1.1"
+    domains: "localhost"
+```
+
 
 
 

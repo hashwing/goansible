@@ -10,7 +10,8 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31
 	github.com/zserge/lorca v0.1.9
-	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
+	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	gopkg.in/yaml.v2 v2.2.4
+	software.sslmate.com/src/go-pkcs12 v0.0.0-20210222215041-dec221a1a07f
 )

@@ -37,6 +37,8 @@ type Task struct {
 	Include     string                   `yaml:"include"`
 	IgnoreError bool                     `yaml:"ignore_error"`
 	Tag         string                   `yaml:"tag"`
+	Cert        *actions.CertAction      `yaml:"cert"`
+	Once        bool                     `yaml:"once"`
 }
 
 func (t *Task) Action() model.Action {
@@ -61,6 +63,9 @@ func (t *Task) Action() model.Action {
 	}
 	if t.Directory != nil {
 		action = t.Directory
+	}
+	if t.Cert != nil {
+		action = t.Cert
 	}
 	return action
 }
