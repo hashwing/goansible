@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/hashwing/goansible/model"
+	"github.com/pkg/sftp"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/sync/errgroup"
 )
 
 type connection struct {
@@ -109,28 +109,27 @@ func (conn *connection) Exec(ctx context.Context, withTerminal bool, fn model.Ex
 }
 
 func (conn *connection) CopyFile(ctx context.Context, src io.Reader, size int64, dest, mode string) error {
-	_, err := conn.Exec(ctx, false, func(sess model.Session) (error, *errgroup.Group) {
-		//dir, _ := filepath.Split(dest)
-		// Start scp receiver on the remote host
-		err := sess.Start("scp -tr " + dest)
-		if err != nil {
-			return fmt.Errorf("failed to start scp receiver: %s", err), nil
-		}
-		var g errgroup.Group
-		g.Go(func() error {
-			err := copyFile(
-				sess,
-				src,
-				size,
-				dest,
-				mode,
-			)
-			return err
-		})
-		return nil, &g
-	})
+	sftpClient, err := sftp.NewClient(conn.client)
 	if err != nil {
-		return fmt.Errorf("failed to copy file to %s: %v", dest, err)
+		return err
+	}
+	defer sftpClient.Close()
+	err = sftpClient.MkdirAll(filepath.Dir(dest))
+	if err != nil {
+		return err
+	}
+	fd, err := sftpClient.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+	for {
+		buf := make([]byte, 1024)
+		n, _ := src.Read(buf)
+		if n == 0 {
+			break
+		}
+		fd.Write(buf[:n])
 	}
 	return nil
 }

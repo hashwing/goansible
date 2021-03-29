@@ -27,6 +27,8 @@ type CertAction struct {
 	IPAddresses        string `yaml:"ip_addresses,omitempty"`
 	Domains            string `yaml:"domains,omitempty"`
 	Expires            string `yaml:"expires,omitempty"`
+	P12                string `yaml:"p12,omitempty"`
+	P12Password        string `yaml:"p12_password,omitempty"`
 }
 
 func (a *CertAction) parse(vars *model.Vars) (*CertAction, error) {
@@ -53,6 +55,8 @@ func (a *CertAction) parse(vars *model.Vars) (*CertAction, error) {
 		Locality:           common.ParseTplWithPanic(a.Locality, vars),
 		IsCA:               common.ParseTplWithPanic(a.IsCA, vars),
 		Expires:            common.ParseTplWithPanic(a.Expires, vars),
+		P12:                common.ParseTplWithPanic(a.P12, vars),
+		P12Password:        common.ParseTplWithPanic(a.P12Password, vars),
 	}, gerr
 }
 
@@ -80,7 +84,6 @@ func (a *CertAction) Run(ctx context.Context, conn model.Connection, conf model.
 	if info.IsCA {
 		crtB, keyB, err = cert.CreateCRT(nil, nil, info)
 	} else {
-		fmt.Println("dddd", parseAction.RootCrtPath)
 		rootCrtB, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, parseAction.RootCrtPath))
 		if err != nil {
 			return "", err
@@ -111,6 +114,16 @@ func (a *CertAction) Run(ctx context.Context, conn model.Connection, conf model.
 	err = ioutil.WriteFile(filepath.Join(conf.PlaybookFolder, parseAction.KeyPath), keyB, 0664)
 	if err != nil {
 		return "", err
+	}
+	if parseAction.P12 != "" {
+		p12cert, err := cert.CertToP12(crtB, keyB, parseAction.P12Password)
+		if err != nil {
+			return "", err
+		}
+		err = ioutil.WriteFile(filepath.Join(conf.PlaybookFolder, parseAction.P12), []byte(p12cert), 0664)
+		if err != nil {
+			return "", err
+		}
 	}
 	return "", nil
 }
