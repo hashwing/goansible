@@ -9,6 +9,7 @@ var funcMap = template.FuncMap{
 	"plus":           plus,
 	"minus":          minus,
 	"join_groupvars": join_groupvars,
+	"len":            length,
 }
 
 func join(a interface{}, step string) interface{} {
@@ -59,4 +60,8 @@ func join_groupvars(groupVars map[string]map[string]interface{}, key, step strin
 		i++
 	}
 	return res
+}
+
+func length(b []interface{}) int {
+	return len(b)
 }

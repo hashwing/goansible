@@ -151,6 +151,7 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 			}
 			for _, item := range loops {
 				vars.Item = item
+
 				conn, err := getConn(h.Name)
 				if err != nil {
 					termutil.Errorf("error: [%s], msg: %v", h.Name, err)
@@ -198,10 +199,15 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 }
 
 var globalConns map[string]model.Connection = make(map[string]model.Connection)
+var isInitConn = false
 
 func initConn(gs map[string]*model.Group, name string) error {
+	if isInitConn {
+		return nil
+	}
 	var wg sync.WaitGroup
 	var gerr error
+	mu := new(sync.Mutex)
 	wg.Add(len(gs[name].Hosts))
 	for _, h := range gs[name].Hosts {
 		go func(h *model.Host) {
@@ -212,10 +218,13 @@ func initConn(gs map[string]*model.Group, name string) error {
 				termutil.Errorf(err.Error())
 				return
 			}
+			mu.Lock()
 			globalConns[h.Name] = conn
+			mu.Unlock()
 		}(h)
 	}
 	wg.Wait()
+	isInitConn = true
 	return gerr
 }
 
