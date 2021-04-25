@@ -70,13 +70,13 @@ func (t *Task) Action() model.Action {
 	return action
 }
 
-func UnmarshalFromFile(playbookFile string) ([]Playbook, error) {
+func UnmarshalFromFile(playbookFile string) ([]*Playbook, error) {
 	fileContents, err := ioutil.ReadFile(playbookFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open playbook file: %s", err)
 	}
 
-	var playbooks []Playbook
+	var playbooks []*Playbook
 	err = yaml.Unmarshal(fileContents, &playbooks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal playbook contents: %s", err)
@@ -85,7 +85,7 @@ func UnmarshalFromFile(playbookFile string) ([]Playbook, error) {
 	return playbooks, nil
 }
 
-func Run(cfg model.Config, ps []Playbook, inv model.Inventory) error {
+func Run(cfg model.Config, ps []*Playbook, inv model.Inventory) error {
 	gs, err := inv.Groups()
 	if err != nil {
 		return err

@@ -38,6 +38,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 				return err
 			}
 			vars = pl.Vars
+			p.Vars = pl.Vars
 		}
 		return nil
 	}
