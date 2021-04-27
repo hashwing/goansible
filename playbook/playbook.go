@@ -39,6 +39,7 @@ type Task struct {
 	Tag         string                   `yaml:"tag"`
 	Cert        *actions.CertAction      `yaml:"cert"`
 	Once        bool                     `yaml:"once"`
+	Curl        *actions.CurlAction      `yaml:"curl"`
 }
 
 func (t *Task) Action() model.Action {
@@ -66,6 +67,9 @@ func (t *Task) Action() model.Action {
 	}
 	if t.Cert != nil {
 		action = t.Cert
+	}
+	if t.Curl != nil {
+		action = t.Curl
 	}
 	return action
 }

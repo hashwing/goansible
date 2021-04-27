@@ -413,6 +413,31 @@ goansible 内置部分函数：
     domains: "localhost"
 ```
 
+8、curl
+
+```yaml
+- name: curl请求
+  curl:
+    url: http://127.0.0.1
+    option: 
+      request: POST
+      header: "Content-Type:application/json"
+      data: |
+        {"hello":"world"}
+- name: curl请求 yaml to json
+  curl:
+    url: http://127.0.0.1
+    options: 
+      request: POST
+      header: "Content-Type:application/json"
+      data-yaml: |
+        hello: world   
+```
+
+- url: 请求地址
+
+- options: 和 curl 命令参数相同，可以使用curl --help 查看，新增 data-yaml，使用yaml 编写格式
+
 
 
 

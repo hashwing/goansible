@@ -1,6 +1,7 @@
 package common
 
 import (
+	"strings"
 	"text/template"
 )
 
@@ -9,7 +10,8 @@ var funcMap = template.FuncMap{
 	"plus":           plus,
 	"minus":          minus,
 	"join_groupvars": join_groupvars,
-	"len":            length,
+	"trimSuffix":     trimSuffix,
+	"trimPrefix":     trimPrefix,
 }
 
 func join(a interface{}, step string) interface{} {
@@ -62,6 +64,10 @@ func join_groupvars(groupVars map[string]map[string]interface{}, key, step strin
 	return res
 }
 
-func length(b []interface{}) int {
-	return len(b)
+func trimSuffix(s, suffix string) string {
+	return strings.TrimSuffix(s, suffix)
+}
+
+func trimPrefix(s, prefix string) string {
+	return strings.TrimPrefix(s, prefix)
 }

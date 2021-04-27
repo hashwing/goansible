@@ -123,15 +123,16 @@ func (conn *connection) CopyFile(ctx context.Context, src io.Reader, size int64,
 		return err
 	}
 	defer fd.Close()
-	for {
-		buf := make([]byte, 1024)
-		n, _ := src.Read(buf)
-		if n == 0 {
-			break
-		}
-		fd.Write(buf[:n])
-	}
-	return nil
+	_, err = io.Copy(fd, src)
+	// buf := make([]byte, 1024)
+	// for {
+	// 	n, _ := src.Read(buf)
+	// 	if n == 0 {
+	// 		break
+	// 	}
+	// 	fd.Write(buf[:n])
+	// }
+	return err
 }
 
 // Copies the contents of src to dest on a remote host

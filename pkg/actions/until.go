@@ -82,7 +82,7 @@ func (a *UntilAction) Run(ctx context.Context, conn model.Connection, conf model
 			})
 		}
 		if err != nil {
-			return stdout, err
+			//return stdout, err
 		}
 		isMatch, err := regexp.MatchString(newa.Match, stdout)
 		if err != nil {
