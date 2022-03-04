@@ -50,6 +50,14 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 	if err != nil {
 		return err
 	}
+	groups := make(map[string]interface{})
+	for _, g := range gs {
+		groupVars := make(map[string]map[string]interface{})
+		for _, h := range g.Hosts {
+			groupVars[h.Name] = h.HostVars
+		}
+		groups[g.Name] = groupVars
+	}
 	g, ok := gs[p.Hosts]
 	if !ok {
 		return errors.New(p.Hosts + " hosts group undefine")
@@ -88,7 +96,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 				return err
 			}
 			for _, itask := range itasks {
-				err := p.runTask(itask, groupVars, g, conf)
+				err := p.runTask(itask, groups, groupVars, g, conf)
 				if err != nil {
 					if itask.IgnoreError {
 						termutil.Printf("ignore error ...\n")
@@ -99,7 +107,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 			}
 			continue
 		}
-		err := p.runTask(t, groupVars, g, conf)
+		err := p.runTask(t, groups, groupVars, g, conf)
 		if err != nil {
 			if t.IgnoreError {
 				termutil.Printf("ignore error ...\n")
@@ -113,7 +121,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 	return nil
 }
 
-func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
+func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
 	termutil.FullPrintf("Task [%s] ", "*", t.Name)
 	if !TagFilter(conf.Tag, t.Tag) {
 		termutil.Printf("slip: tag filter\n")
@@ -139,6 +147,7 @@ func (p *Playbook) runTask(t Task, groupVars map[string]map[string]interface{}, 
 				Values:    p.Vars,
 				GroupVars: groupVars,
 				HostVars:  groupVars[h.Name],
+				Groups:    groups,
 			}
 			if t.When != "" {
 				if !When(t.When, vars) {

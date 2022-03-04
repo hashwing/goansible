@@ -71,6 +71,9 @@ func (t *Task) Action() model.Action {
 	if t.Curl != nil {
 		action = t.Curl
 	}
+	if action == nil {
+		action = new(actions.NoneAction)
+	}
 	return action
 }
 
