@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,10 +22,15 @@ type Session struct {
 	stdin                 io.WriteCloser
 	output                *bytes.Buffer
 	sigintHandlerQuitChan chan struct{}
+	sudoPasswd            []string
 }
 
 // Start starts a remote process in the current session
 func (s *Session) Start(cmd string, logFunc ...func(scanner *bufio.Scanner)) error {
+	// data, err := s.sshSess.CombinedOutput("echo Sunruncaas38288446 | sudo -S docker ps")
+	// fmt.Println(string(data), err)
+	// data, err = s.sshSess.CombinedOutput("docker ps")
+	// fmt.Println(string(data), err)
 	if len(logFunc) > 0 {
 		stdout, err := s.sshSess.StdoutPipe()
 		if err != nil {
@@ -35,6 +41,9 @@ func (s *Session) Start(cmd string, logFunc ...func(scanner *bufio.Scanner)) err
 		var b bytes.Buffer
 		s.sshSess.Stdout = &b
 		s.output = &b
+	}
+	if len(s.sudoPasswd) > 0 {
+		cmd = fmt.Sprintf("echo %s | sudo -S %s", s.sudoPasswd[0], cmd)
 	}
 	err := s.sshSess.Start(cmd)
 	//wait stdout deal complete
@@ -50,7 +59,11 @@ func (s *Session) Wait() error {
 }
 
 func (s *Session) Output() string {
-	return s.output.String()
+	o := s.output.String()
+	if strings.HasPrefix(o, "[sudo]") {
+		return strings.TrimPrefix(strings.SplitN(o, ":", 2)[1], " ")
+	}
+	return o
 }
 
 // Stdin returns a pipe to the stdin of the remote process
@@ -87,7 +100,7 @@ func (s *Session) Close() error {
 }
 
 // newSession creates a new session
-func newSession(ctx context.Context, client *ssh.Client, withTerminal bool, fn model.ExecCallbackFunc) (model.Session, error) {
+func newSession(ctx context.Context, client *ssh.Client, withTerminal bool, fn model.ExecCallbackFunc, sudoPasswd []string) (model.Session, error) {
 	sshSess, err := client.NewSession()
 	if err != nil {
 		client.Close()
@@ -118,7 +131,7 @@ func newSession(ctx context.Context, client *ssh.Client, withTerminal bool, fn m
 
 	// If requested, send SIGINT to the remote process and close the session
 	quitChan := make(chan struct{})
-	sess := Session{sshSess: sshSess, stdin: stdin, sigintHandlerQuitChan: quitChan}
+	sess := Session{sshSess: sshSess, stdin: stdin, sigintHandlerQuitChan: quitChan, sudoPasswd: sudoPasswd}
 	go func() {
 		select {
 		case <-ctx.Done():

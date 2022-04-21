@@ -16,10 +16,11 @@ import (
 )
 
 type connection struct {
-	client *ssh.Client
+	sudoPasswd []string
+	client     *ssh.Client
 }
 
-func Connect(user, passwd, pkFile, addr string) (model.Connection, error) {
+func Connect(user, passwd, pkFile, addr string, sudoPasswd ...string) (model.Connection, error) {
 	auth := []ssh.AuthMethod{}
 	if passwd != "" {
 		keyboardInteractiveChallenge := func(
@@ -65,7 +66,7 @@ func Connect(user, passwd, pkFile, addr string) (model.Connection, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &connection{client}, nil
+	return &connection{client: client, sudoPasswd: sudoPasswd}, nil
 }
 
 func (conn *connection) Close() error {
@@ -73,7 +74,7 @@ func (conn *connection) Close() error {
 }
 
 func (conn *connection) Exec(ctx context.Context, withTerminal bool, fn model.ExecCallbackFunc) (string, error) {
-	sess, err := newSession(ctx, conn.client, withTerminal, fn)
+	sess, err := newSession(ctx, conn.client, withTerminal, fn, conn.sudoPasswd)
 	if err != nil {
 		return "", fmt.Errorf("failed to create new session: %s", err)
 	}

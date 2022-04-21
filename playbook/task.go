@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	sshUser = "ansible_ssh_user"
-	sshPwd  = "ansible_ssh_pass"
-	sshKey  = "ansible_ssh_key"
-	sshHost = "ansible_ssh_host"
-	sshPort = "ansible_ssh_port"
+	sshUser    = "ansible_ssh_user"
+	sshPwd     = "ansible_ssh_pass"
+	sshKey     = "ansible_ssh_key"
+	sshHost    = "ansible_ssh_host"
+	sshPort    = "ansible_ssh_port"
+	sshSudoPwd = "ansible_ssh_sudopass"
 )
 
 func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interface{}, vars map[string]interface{}, conf model.Config) error {
@@ -192,7 +193,7 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 						globalErr = err
 						return
 					}
-					termutil.Changedf("debug: %s", info)
+					termutil.Changedf("debug:\n%s", info)
 				}
 				if v, ok := item.(string); ok && v != "" {
 					termutil.Successf("success: [%s] itme=>%s", h.Name, v)
@@ -264,7 +265,12 @@ func connect(h *model.Host) (model.Connection, error) {
 	if !ok {
 		key = ""
 	}
-	conn, err := transport.Connect(user.(string), pwd.(string), key.(string), host.(string)+":"+port.(string))
+	sudoPwds := []string{}
+	sudoPwd, ok := h.HostVars[sshSudoPwd]
+	if ok {
+		sudoPwds = append(sudoPwds, sudoPwd.(string))
+	}
+	conn, err := transport.Connect(user.(string), pwd.(string), key.(string), host.(string)+":"+port.(string), sudoPwds...)
 	if err != nil {
 		return nil, err
 	}
