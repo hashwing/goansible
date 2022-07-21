@@ -18,7 +18,7 @@
 
 cd cmd/playbook/
 
-go build -v
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o goansible
 
 ```
 
@@ -28,14 +28,14 @@ go build -v
 
 ```
 
-playbook --workdir <your playbook dir> --tag <your tag1>,<your tag2>
+goansible --workdir <your playbook dir> --tag <your tag1>,<your tag2>
 
 ```
 
 ### 运行批量命令
 
 ```
-playbook run <group name> "<shell command>" [--workdir <your inventory dir>] 
+goansible run <group name> "<shell command>" [--workdir <your inventory dir>] 
 
 ```
 
@@ -78,6 +78,7 @@ groups:
       ansible_ssh_port: "22"
       ansible_ssh_user: root
       ansible_ssh_pass: "123456"
+      ansible_ssh_sudopass: "123456"
       ansible_ssh_key: ""
     host2:
       ansible_ssh_host: "192.168.1.101"
@@ -149,11 +150,11 @@ vars:
 
 一、变量和函数
 
-goansible 分为三种种变量，一种全局变量values; 一种是主机变量hostvars；还有当前组所有主机变量groupvars （hostvars 是 groupvars 一个成员）。
+goansible 分为四种种变量，一种全局变量values; 一种是主机变量hostvars；还有当前组所有主机变量groupvars （hostvars 是 groupvars 一个成员），所有主的变量 groups (groupvars 是 groups 一个成员)。
 
-在模板中使用：`{{ .Values.xxx }}`、  `{{ .HostVars.xxx }}`、 `{{ .GroupVars.hostname.xxx }}`
+在模板中使用：`{{ .Values.xxx }}`、  `{{ .HostVars.xxx }}`、 `{{ .GroupVars.hostname.xxx }}` `{{ .Groups.groupname.hostname.xxx }}`
 
-在赋值中使用： `values.xxx`、 `hostvars.xxx` 、`groupvars.hostname.xxx`
+在赋值中使用： `values.xxx`、 `hostvars.xxx` 、`groupvars.hostname.xxx` `groups.groupname.hostname.xxx`
 
 goansible 内置部分函数：
 
@@ -436,7 +437,7 @@ goansible 内置部分函数：
 
 - url: 请求地址
 
-- options: 和 curl 命令参数相同，可以使用curl --help 查看，新增 data-yaml，使用yaml 编写格式
+- options: 和 curl 命令参数相同，可以使用curl --help 查看，新增 data-yaml，使用yaml 编写格式，data-file： 指定yaml 文件
 
 
 

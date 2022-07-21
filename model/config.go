@@ -4,4 +4,5 @@ type Config struct {
 	PlaybookFolder string
 	Tag            string
 	InvFile        string
+	PlaybookFile   string
 }

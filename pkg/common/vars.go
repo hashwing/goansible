@@ -16,6 +16,17 @@ func init() {
 	mutex = new(sync.Mutex)
 }
 
+func Vars(vars *model.Vars) map[string]interface{} {
+	p := make(map[string]interface{})
+	p["hostvars"] = vars.HostVars
+	p["values"] = vars.Values
+	p["groups"] = vars.Groups
+	p["groupvars"] = vars.GroupVars
+	p["item"] = vars.Item
+	p["itemkey"] = vars.Item
+	return p
+}
+
 func GetVar(s string, vars *model.Vars) (interface{}, bool) {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -28,6 +39,13 @@ func GetVar(s string, vars *model.Vars) (interface{}, bool) {
 			p = vars.HostVars
 		case "values":
 			p = vars.Values
+		case "groups":
+			p = vars.Groups
+		case "groupvars":
+			p = make(map[string]interface{})
+			for k, v := range vars.GroupVars {
+				p[k] = v
+			}
 		default:
 			return nil, false
 		}
@@ -67,6 +85,13 @@ func SetVar(s string, value interface{}, vars *model.Vars) {
 			p = vars.HostVars
 		case "values":
 			p = vars.Values
+		case "groups":
+			p = vars.Groups
+		case "groupvars":
+			p = make(map[string]interface{})
+			for k, v := range vars.GroupVars {
+				p[k] = v
+			}
 		default:
 			return
 		}

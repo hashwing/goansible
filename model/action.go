@@ -12,4 +12,5 @@ type Vars struct {
 	GroupVars map[string]map[string]interface{}
 	Groups    map[string]interface{}
 	Item      interface{}
+	ItemKey   interface{}
 }

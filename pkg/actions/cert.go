@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/hashwing/goansible/model"
@@ -84,11 +85,19 @@ func (a *CertAction) Run(ctx context.Context, conn model.Connection, conf model.
 	if info.IsCA {
 		crtB, keyB, err = cert.CreateCRT(nil, nil, info)
 	} else {
-		rootCrtB, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, parseAction.RootCrtPath))
+		rcpath := parseAction.RootCrtPath
+		if !filepath.IsAbs(rcpath) {
+			rcpath = filepath.Join(conf.PlaybookFolder, parseAction.RootCrtPath)
+		}
+		rootCrtB, err := ioutil.ReadFile(rcpath)
 		if err != nil {
 			return "", err
 		}
-		rootKeyB, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, parseAction.RootKeyPath))
+		rkpath := parseAction.RootKeyPath
+		if !filepath.IsAbs(rkpath) {
+			rkpath = filepath.Join(conf.PlaybookFolder, parseAction.RootKeyPath)
+		}
+		rootKeyB, err := ioutil.ReadFile(rkpath)
 		if err != nil {
 			return "", err
 		}
@@ -107,11 +116,21 @@ func (a *CertAction) Run(ctx context.Context, conn model.Connection, conf model.
 	if err != nil {
 		return "", err
 	}
-	err = ioutil.WriteFile(filepath.Join(conf.PlaybookFolder, parseAction.CrtPath), crtB, 0664)
+	cpath := parseAction.CrtPath
+	if !filepath.IsAbs(cpath) {
+		cpath = filepath.Join(conf.PlaybookFolder, parseAction.CrtPath)
+	}
+	os.MkdirAll(filepath.Dir(cpath), 0755)
+	err = ioutil.WriteFile(cpath, crtB, 0664)
 	if err != nil {
 		return "", err
 	}
-	err = ioutil.WriteFile(filepath.Join(conf.PlaybookFolder, parseAction.KeyPath), keyB, 0664)
+	kpath := parseAction.KeyPath
+	if !filepath.IsAbs(kpath) {
+		kpath = filepath.Join(conf.PlaybookFolder, parseAction.KeyPath)
+	}
+	os.MkdirAll(filepath.Dir(kpath), 0755)
+	err = ioutil.WriteFile(kpath, keyB, 0664)
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +139,12 @@ func (a *CertAction) Run(ctx context.Context, conn model.Connection, conf model.
 		if err != nil {
 			return "", err
 		}
-		err = ioutil.WriteFile(filepath.Join(conf.PlaybookFolder, parseAction.P12), []byte(p12cert), 0664)
+		p12path := parseAction.P12
+		if !filepath.IsAbs(p12path) {
+			p12path = filepath.Join(conf.PlaybookFolder, parseAction.P12)
+		}
+		os.MkdirAll(filepath.Dir(p12path), 0755)
+		err = ioutil.WriteFile(p12path, []byte(p12cert), 0664)
 		if err != nil {
 			return "", err
 		}

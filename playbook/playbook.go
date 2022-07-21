@@ -40,6 +40,8 @@ type Task struct {
 	Cert        *actions.CertAction      `yaml:"cert"`
 	Once        bool                     `yaml:"once"`
 	Curl        *actions.CurlAction      `yaml:"curl"`
+	Js          *actions.JsAction        `yaml:"js"`
+	JsFile      *actions.JsFileAction    `yaml:"jsfile"`
 }
 
 func (t *Task) Action() model.Action {
@@ -70,6 +72,12 @@ func (t *Task) Action() model.Action {
 	}
 	if t.Curl != nil {
 		action = t.Curl
+	}
+	if t.Js != nil {
+		action = t.Js
+	}
+	if t.JsFile != nil {
+		action = t.JsFile
 	}
 	if action == nil {
 		action = new(actions.NoneAction)

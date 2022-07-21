@@ -41,7 +41,11 @@ func (a *FileAction) Run(ctx context.Context, conn model.Connection, conf model.
 	if err != nil {
 		return "", err
 	}
-	f, err := os.Open(filepath.Join(conf.PlaybookFolder, parseAction.Src))
+	fpath := parseAction.Src
+	if !filepath.IsAbs(fpath) {
+		fpath = filepath.Join(conf.PlaybookFolder, parseAction.Src)
+	}
+	f, err := os.Open(fpath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open source file: %s", err)
 	}

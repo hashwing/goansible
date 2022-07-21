@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/common"
+	"github.com/hashwing/goansible/pkg/expr"
 )
 
 type SetfaceAction string
@@ -14,7 +15,8 @@ type SetfaceAction string
 func (a *SetfaceAction) Run(ctx context.Context, conn model.Connection, conf model.Config, vars *model.Vars) (string, error) {
 	params := strings.Split(string(*a), "=")
 	if len(params) > 1 {
-		data, err := common.ParseTpl(strings.Join(params[1:], "="), vars)
+		data, err := expr.Eval(strings.Join(params[1:], "="), vars)
+		//data, err := common.ParseTpl(strings.Join(params[1:], "="), vars)
 		if err != nil {
 			return "", err
 		}

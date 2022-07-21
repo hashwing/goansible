@@ -3,7 +3,7 @@ package playbook
 import "strings"
 
 func TagFilter(confTagStr, tagStr string) bool {
-	if confTagStr == "" || tagStr == "" {
+	if confTagStr == "" {
 		return true
 	}
 	confTags := strings.Split(confTagStr, ",")

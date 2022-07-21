@@ -156,12 +156,14 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 					return
 				}
 			}
-			loops := []interface{}{""}
+			loops := make(map[interface{}]interface{})
+			loops["0"] = ""
 			if t.Loop != nil {
 				loops = Loop(t.Loop, vars)
 			}
-			for _, item := range loops {
+			for k, item := range loops {
 				vars.Item = item
+				vars.ItemKey = k
 
 				conn, err := getConn(h.Name)
 				if err != nil {

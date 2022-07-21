@@ -42,7 +42,11 @@ func (a *TemplateAction) Run(ctx context.Context, conn model.Connection, conf mo
 	if err != nil {
 		return "", err
 	}
-	tpl, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, parseAction.Src))
+	fpath := parseAction.Src
+	if !filepath.IsAbs(fpath) {
+		fpath = filepath.Join(conf.PlaybookFolder, parseAction.Src)
+	}
+	tpl, err := ioutil.ReadFile(fpath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open source file: %s", err)
 	}

@@ -1,6 +1,8 @@
 package main
 
-import "github.com/hashwing/goansible/pkg/command"
+import (
+	"github.com/hashwing/goansible/pkg/command"
+)
 
 func main() {
 	command.NewRoot()
