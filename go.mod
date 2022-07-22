@@ -13,9 +13,11 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v1.0.0
 	github.com/ttacon/chalk v0.0.0-20160626202418-22c06c80ed31
+	github.com/yuin/gopher-lua v0.0.0-20220504180219-658193537a64 // indirect
 	github.com/zserge/lorca v0.1.9
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	gopkg.in/yaml.v2 v2.4.0
+	layeh.com/gopher-luar v1.0.10 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20210222215041-dec221a1a07f
 )

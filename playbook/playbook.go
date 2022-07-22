@@ -42,6 +42,8 @@ type Task struct {
 	Curl        *actions.CurlAction      `yaml:"curl"`
 	Js          *actions.JsAction        `yaml:"js"`
 	JsFile      *actions.JsFileAction    `yaml:"jsfile"`
+	Lua         *actions.LuaAction       `yaml:"lua"`
+	LuaFile     *actions.LuaFileAction   `yaml:"luafile"`
 }
 
 func (t *Task) Action() model.Action {
@@ -78,6 +80,12 @@ func (t *Task) Action() model.Action {
 	}
 	if t.JsFile != nil {
 		action = t.JsFile
+	}
+	if t.Lua != nil {
+		action = t.Lua
+	}
+	if t.LuaFile != nil {
+		action = t.LuaFile
 	}
 	if action == nil {
 		action = new(actions.NoneAction)
