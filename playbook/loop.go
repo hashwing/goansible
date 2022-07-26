@@ -16,9 +16,23 @@ func Loop(loop interface{}, vars *model.Vars) map[interface{}]interface{} {
 		}
 		return res
 	case reflect.String:
-		v, res := common.GetVar(loop.(string), vars)
+		loopv, res := common.GetVar(loop.(string), vars)
 		if res {
-			return Loop(v, vars)
+			res := make(map[interface{}]interface{})
+			switch reflect.TypeOf(loopv).Kind() {
+			case reflect.Slice:
+				for i, item := range loopv.([]interface{}) {
+					res[i] = item
+				}
+				return res
+			case reflect.Map:
+				res := make(map[interface{}]interface{})
+				v := reflect.ValueOf(loopv)
+				for _, k := range v.MapKeys() {
+					res[k.Interface()] = v.MapIndex(k).Interface()
+				}
+				return res
+			}
 		}
 	case reflect.Map:
 		res := make(map[interface{}]interface{})

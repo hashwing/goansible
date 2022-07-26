@@ -1,18 +1,14 @@
 # GoAnsible
 
-使用golang 编写， 实现 ansible playbook 部分功能，安装起来更简单，目的不在于替换ansible，而是代替某些复杂shell脚本（特别多机部署）。并且从 `V0.0.2` 开始提供桌面客户端。
+使用golang 编写， 实现 ansible playbook 部分功能，安装起来更简单，目的不在于替换ansible，而是代替某些复杂shell脚本（特别多机部署）。
 
-
-**Playbook 管理界面**
-
-![playbook](./docs/playbook.png)
-
-**运行日志**
 
 ![log](./docs/log.png)
 
 
 ## 编译
+
+### 编译命令行工具
 
 ```
 
@@ -22,25 +18,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o goansible
 
 ```
 
-## 使用
-
-### 运行playbook
-
-```
-
-goansible --workdir <your playbook dir> --tag <your tag1>,<your tag2>
-
-```
-
-### 运行批量命令
-
-```
-goansible run <group name> "<shell command>" [--workdir <your inventory dir>] 
-
-```
-
-
-### 编译桌面客户端
+### 编译桌面客户端（废弃）
 
 `windows`
 
@@ -60,12 +38,36 @@ go build  -v
 
 ```
 
+## 快速开始
+
+### 初始化文件
+
+```
+
+goansible init
+
+```
+执行命令生成在当前目录生成 `values.yaml` 和 `index.yaml` 两个文件
+
+- values.yaml : 定义变量，如主机ssh 信息
+
+- index.yaml : 定义playbook及其 tasks
+
+### 运行playbook
+
+```
+
+goansible 
+
+```
+
+
 
 ## 使用教程
 
 playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的 template
 
-inventory 从0.0.2版本开始使用 yaml 格式定义，定义主机属性和分组以及自定义变量
+inventory 使用 yaml 格式定义，定义主机属性和分组以及自定义变量
 
 ### inventory
 
@@ -86,6 +88,12 @@ groups:
       ansible_ssh_user: root
       ansible_ssh_pass: "123456"
       ansible_ssh_key: ""
+    localhost: # 表示本地主机
+      ansible_ssh_host: ""
+      ansible_ssh_port: ""
+      ansible_ssh_user: ""
+      ansible_ssh_pass: ""
+      ansible_ssh_key: ""
   test:
      host1: {}
      host2: {}
@@ -104,7 +112,9 @@ vars:
 ```yaml
 - name: import playbook
   import_playbook: import.yaml
-  tag: tag1,tag2
+  tags: 
+    - tag1
+    - tag2
 
 - name: example playbook
   hosts: test
@@ -131,7 +141,7 @@ vars:
 
 * tasks： 包含一组任务
 
-* tag：标签过滤，多个标签使用","分割，
+* tags：标签过滤，多个标签使用","分割，
 
 ### task
 
@@ -233,14 +243,16 @@ goansible 内置部分函数：
 ```yaml
 - name: tag test
   shell: do something
-  tag: tag1,tag2
+  tags: 
+    - tag1
+    - tag2
 
 ```
 
 运行时设置标签： 
 
 ```
-./playbook -tag tag1,tag2
+./playbook -tags tag1,tag2
 
 ```
 
@@ -439,6 +451,15 @@ goansible 内置部分函数：
 
 - options: 和 curl 命令参数相同，可以使用curl --help 查看，新增 data-yaml，使用yaml 编写格式，data-file： 指定yaml 文件
 
+9、设置变量
 
+```yaml
+  - name: setface
+    setface: 'values.a=hostvars.ansible_ssh_host'
+    debug: '{{ .Values.a }}'
+
+```
+
+将 `hostvars.ansible_ssh_host` 赋值给 `values.a`
 
 

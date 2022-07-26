@@ -2,6 +2,7 @@ package playbook
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -24,7 +25,7 @@ const (
 
 func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interface{}, vars map[string]interface{}, conf model.Config) error {
 	termutil.FullInfo("Playbook [%s] ", "=", p.Name)
-	if !TagFilter(conf.Tag, p.Tag) {
+	if !TagFilter(conf.Tags, p.Tags) {
 		termutil.Printf("slip: tag filter\n")
 		return nil
 	}
@@ -34,6 +35,9 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 			return err
 		}
 		for _, pl := range pls {
+			if len(pl.Tags) == 0 {
+				pl.Tags = p.Tags
+			}
 			err := pl.Run(gs, customVars, vars, conf)
 			if err != nil {
 				return err
@@ -87,8 +91,11 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 	}
 
 	for _, t := range p.Tasks {
+		if len(t.Tags) == 0 {
+			t.Tags = p.Tags
+		}
 		if t.Include != "" {
-			if !TagFilter(conf.Tag, t.Tag) {
+			if !TagFilter(conf.Tags, t.Tags) {
 				termutil.Printf("slip: tag filter\n")
 				continue
 			}
@@ -124,7 +131,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 
 func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
 	termutil.FullPrintf("Task [%s] ", "*", t.Name)
-	if !TagFilter(conf.Tag, t.Tag) {
+	if !TagFilter(conf.Tags, t.Tags) {
 		termutil.Printf("slip: tag filter\n")
 		return nil
 	}
@@ -197,8 +204,9 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 					}
 					termutil.Changedf("debug:\n%s", info)
 				}
-				if v, ok := item.(string); ok && v != "" {
-					termutil.Successf("success: [%s] itme=>%s", h.Name, v)
+				if t.Loop != nil {
+					itemData, _ := json.Marshal(item)
+					termutil.Successf("success: [%s] itme=>%s", h.Name, string(itemData))
 				}
 			}
 			termutil.Successf("success: [%s]", h.Name)

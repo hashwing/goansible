@@ -19,6 +19,7 @@ type Playbook struct {
 	IncludeValues  []string               `yaml:"include_values"`
 	Tasks          []Task                 `yaml:"tasks"`
 	Tag            string                 `yaml:"tag"`
+	Tags           []string               `yaml:"tags"`
 }
 
 type Task struct {
@@ -44,6 +45,7 @@ type Task struct {
 	JsFile      *actions.JsFileAction    `yaml:"jsfile"`
 	Lua         *actions.LuaAction       `yaml:"lua"`
 	LuaFile     *actions.LuaFileAction   `yaml:"luafile"`
+	Tags        []string                 `yaml:"tags"`
 }
 
 func (t *Task) Action() model.Action {

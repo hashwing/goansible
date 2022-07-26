@@ -1,13 +1,9 @@
 package playbook
 
-import "strings"
-
-func TagFilter(confTagStr, tagStr string) bool {
-	if confTagStr == "" {
+func TagFilter(confTags, tags []string) bool {
+	if len(confTags) == 0 {
 		return true
 	}
-	confTags := strings.Split(confTagStr, ",")
-	tags := strings.Split(tagStr, ",")
 	for _, confTag := range confTags {
 		for _, tag := range tags {
 			if confTag == tag {
