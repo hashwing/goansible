@@ -12,29 +12,9 @@
 
 ```
 
-cd cmd/playbook/
+cd cmd/goansible/
 
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o goansible
-
-```
-
-### 编译桌面客户端（废弃）
-
-`windows`
-
-```
-cd cmd/desktop/
-
-go build -ldflags "-s -w -H=windowsgui"
-
-```
-
-`linux`
-
-```
-cd cmd/desktop/
-
-go build  -v
 
 ```
 
