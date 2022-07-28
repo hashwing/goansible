@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/antonmedv/expr v1.9.0
+	github.com/bitfield/script v0.20.2 // indirect
 	github.com/cheggaaa/pb/v3 v3.1.0
 	github.com/dop251/goja v0.0.0-20220722151623-4765a9872229
 	github.com/mattn/go-runewidth v0.0.13

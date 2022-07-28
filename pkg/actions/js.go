@@ -2,12 +2,13 @@ package actions
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 
 	"github.com/dop251/goja"
 
+	"github.com/bitfield/script"
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/common"
 )
@@ -19,7 +20,14 @@ func (a *JsAction) Run(ctx context.Context, conn model.Connection, conf model.Co
 	for k, v := range common.Vars(vars) {
 		jsvm.Set(k, v)
 	}
-	_, err := jsvm.RunString(fmt.Sprintf("function run(){%s}\n run()", *a))
+	newPipe := func() *script.Pipe {
+		return script.NewPipe()
+	}
+	jsvm.Set("newPipe", newPipe)
+	jsvm.Set("mustCompile", regexp.MustCompile)
+
+	//_, err := jsvm.RunString(fmt.Sprintf("function run(){%s}\n run()", *a))
+	_, err := jsvm.RunString(string(*a))
 
 	return "", err
 }

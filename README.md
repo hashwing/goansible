@@ -47,42 +47,43 @@ goansible
 
 playbook格式跟 ansible playbook非常相似，但 goansible 没有role 功能，模板由 jinja2 变为 go 的 template
 
-inventory 使用 yaml 格式定义，定义主机属性和分组以及自定义变量
+inventory 使用 yaml 格式定义，定义主机属性和分组以及自定义变量。同时支持通过javascript 和 lua 脚本，用于参数处理
 
 ### inventory
 
 ```yaml
 
 groups:
-  all:
-    host1:
-      ansible_ssh_host: "192.168.1.100"
-      ansible_ssh_port: "22"
-      ansible_ssh_user: root
-      ansible_ssh_pass: "123456"
-      ansible_ssh_sudopass: "123456"
-      ansible_ssh_key: ""
+  all: # 必须定义， 一个特殊组，包含所有主机的定义
+    host1: # 主机名，可以通过 ansible_ssh_hostname 属性来获取 
+      ansible_ssh_host: "192.168.1.100" # 主机 ssh ip 
+      ansible_ssh_port: "22" # 主机ssh 端口
+      ansible_ssh_user: root # 主机ssh 用户
+      ansible_ssh_pass: "123456" # 主机ssh 密码 （密码、密钥二选一）
+      ansible_ssh_sudopass: "123456" # 主机ssh sudo 密码, 当定义了该属性，所有执行的命令都会自动加上sudo
+      ansible_ssh_key: "" # 主机机ssh 密钥 （密码、密钥二选一）
     host2:
       ansible_ssh_host: "192.168.1.101"
       ansible_ssh_port: "22"
       ansible_ssh_user: root
       ansible_ssh_pass: "123456"
       ansible_ssh_key: ""
-    localhost: # 表示本地主机
+    localhost: # 特殊的主机名，localhost表示本地主机，无需ssh
       ansible_ssh_host: ""
       ansible_ssh_port: ""
       ansible_ssh_user: ""
       ansible_ssh_pass: ""
       ansible_ssh_key: ""
-  test:
-     host1: {}
+  testgroup1: # 用户自定义组，名字可以任意取
+     host1: 
+       node_master: true
      host2: {}
 vars: 
   key1: value1
 
 ```
 
-- groups： 定义主机属性和分组
+- groups： 定义主机属性和分组，`all`: 一个特殊组，包含所有主机的定义, `testgroup1`: 用户自定义组，名字可以任意取。
 
 - vars： 自定义变量，可以通过 `{{ .Values.key1 }}` 获取 
 
@@ -142,9 +143,9 @@ vars:
 
 goansible 分为四种种变量，一种全局变量values; 一种是主机变量hostvars；还有当前组所有主机变量groupvars （hostvars 是 groupvars 一个成员），所有主的变量 groups (groupvars 是 groups 一个成员)。
 
-在模板中使用：`{{ .Values.xxx }}`、  `{{ .HostVars.xxx }}`、 `{{ .GroupVars.hostname.xxx }}` `{{ .Groups.groupname.hostname.xxx }}`
+在模板中使用(如：shell，template，debug 等)：`{{ .Values.xxx }}`、  `{{ .HostVars.xxx }}`、 `{{ .GroupVars.hostname.xxx }}` `{{ .Groups.groupname.hostname.xxx }}`
 
-在赋值中使用： `values.xxx`、 `hostvars.xxx` 、`groupvars.hostname.xxx` `groups.groupname.hostname.xxx`
+在赋值中使用（如： stdout, when, loop）： `values.xxx`、 `hostvars.xxx` 、`groupvars.hostname.xxx` `groups.groupname.hostname.xxx`
 
 goansible 内置部分函数：
 
@@ -442,4 +443,27 @@ goansible 内置部分函数：
 
 将 `hostvars.ansible_ssh_host` 赋值给 `values.a`
 
+10、 js 脚本
 
+```yaml
+  - name: js
+    js: |
+      var v = 'js value'
+      values.key1=v
+    debug: '{{ .Values.key1 }}'
+```
+
+- js： js 脚本，可以使用 `values ` `hostvars` `groupvars` `groups`
+
+
+11、lua 脚本
+
+```yaml
+  - name: lua
+    lua: |
+      local v = "js value"
+      values.key1=v
+    debug: '{{ .Values.key1 }}'
+```
+
+- lua : lua 脚本，可以使用 `values ` `hostvars` `groupvars` `groups`

@@ -206,7 +206,7 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 				}
 				if t.Loop != nil {
 					itemData, _ := json.Marshal(item)
-					termutil.Successf("success: [%s] itme=>%s", h.Name, string(itemData))
+					termutil.Successf("success: [%s] item=>%s", h.Name, string(itemData))
 				}
 			}
 			termutil.Successf("success: [%s]", h.Name)

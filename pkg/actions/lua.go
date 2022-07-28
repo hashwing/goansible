@@ -2,10 +2,11 @@ package actions
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 
+	"github.com/bitfield/script"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 
@@ -21,14 +22,12 @@ func (a *LuaAction) Run(ctx context.Context, conn model.Connection, conf model.C
 	for k, v := range common.Vars(vars) {
 		luavm.SetGlobal(k, luar.New(luavm, v))
 	}
-	code := `
-	function run()
-	  %s
-	end
-	run()
-	`
-	err := luavm.DoString(fmt.Sprintf(code, *a))
-
+	newPipe := func() *script.Pipe {
+		return script.NewPipe()
+	}
+	luavm.SetGlobal("newPipe", luar.New(luavm, newPipe))
+	luavm.SetGlobal("mustCompile", luar.New(luavm, regexp.MustCompile))
+	err := luavm.DoString(string(*a))
 	return "", err
 }
 
