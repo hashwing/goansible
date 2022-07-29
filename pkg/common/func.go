@@ -12,6 +12,7 @@ var funcMap = template.FuncMap{
 	"join_groupvars": join_groupvars,
 	"trimSuffix":     trimSuffix,
 	"trimPrefix":     trimPrefix,
+	"spilti":         spilti,
 }
 
 func join(a interface{}, step string) interface{} {
@@ -70,4 +71,8 @@ func trimSuffix(s, suffix string) string {
 
 func trimPrefix(s, prefix string) string {
 	return strings.TrimPrefix(s, prefix)
+}
+
+func spilti(s, step string, index int) string {
+	return strings.Split(s, step)[index]
 }

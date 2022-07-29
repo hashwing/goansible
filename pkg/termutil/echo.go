@@ -53,3 +53,7 @@ func Changedf(f string, a ...interface{}) {
 func Infof(f string, a ...interface{}) {
 	Echo(chalk.Blue.Color(fmt.Sprintf(f, a...)))
 }
+
+func Debugf(f string, a ...interface{}) {
+	Echo(chalk.Cyan.Color(fmt.Sprintf(f, a...)))
+}

@@ -2,11 +2,11 @@ package playbook
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/common"
@@ -147,6 +147,7 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 		wg.Add(len(group.Hosts))
 	}
 	var globalErr error
+	start := time.Now()
 
 	for _, h := range group.Hosts {
 		go func(h *model.Host) {
@@ -185,15 +186,16 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 					return
 				}
 				if t.StdOut != "" {
-					rs := strings.Split(t.StdOut, ".")
-					if len(rs) == 2 {
-						switch rs[0] {
-						case "hostvars":
-							groupVars[h.Name][rs[1]] = strings.TrimSuffix(stdout, "\r\n")
-						case "values":
-							common.SetVar(t.StdOut, strings.TrimSuffix(stdout, "\r\n"), vars)
-						}
-					}
+					common.SetVar(t.StdOut, strings.TrimSuffix(stdout, "\r\n"), vars)
+					// rs := strings.Split(t.StdOut, ".")
+					// if len(rs) ==2 {
+					// 	switch rs[0] {
+					// 	case "hostvars":
+					// 		groupVars[h.Name][rs[1]] = strings.TrimSuffix(stdout, "\r\n")
+					// 	case "values":
+					// 		common.SetVar(t.StdOut, strings.TrimSuffix(stdout, "\r\n"), vars)
+					// 	}
+					// }
 				}
 				if t.Debug != "" {
 					info, err := common.ParseTpl(t.Debug, vars)
@@ -205,8 +207,7 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 					termutil.Changedf("debug:\n%s", info)
 				}
 				if t.Loop != nil {
-					itemData, _ := json.Marshal(item)
-					termutil.Successf("success: [%s] item=>%s", h.Name, string(itemData))
+					termutil.Successf("success: [%s] item => %+v", h.Name, item)
 				}
 			}
 			termutil.Successf("success: [%s]", h.Name)
@@ -216,6 +217,8 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 		}
 	}
 	wg.Wait()
+	end := time.Now()
+	termutil.Debugf("cost: %ds start: %v end: %v", end.Unix()-start.Unix(), start.Format("2006-01-02 15:04:05"), end.Format("2006-01-02 15:04:05"))
 	return globalErr
 }
 
