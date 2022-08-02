@@ -7,6 +7,7 @@ require (
 	github.com/bitfield/script v0.20.2 // indirect
 	github.com/cheggaaa/pb/v3 v3.1.0
 	github.com/dop251/goja v0.0.0-20220722151623-4765a9872229
+	github.com/icza/dyno v0.0.0-20210726202311-f1bafe5d9996 // indirect
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/pkg/sftp v1.13.5
 	github.com/sirupsen/logrus v1.9.0

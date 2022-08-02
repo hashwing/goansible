@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/hashwing/goansible/model"
+	"github.com/icza/dyno"
 )
 
 var mutex *sync.Mutex
@@ -19,7 +20,7 @@ func init() {
 func Vars(vars *model.Vars) map[string]interface{} {
 	p := make(map[string]interface{})
 	p["hostvars"] = vars.HostVars
-	p["values"] = vars.Values
+	p["values"] = dyno.ConvertMapI2MapS(vars.Values)
 	p["groups"] = vars.Groups
 	p["groupvars"] = vars.GroupVars
 	p["item"] = vars.Item
