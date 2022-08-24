@@ -13,6 +13,7 @@ var funcMap = template.FuncMap{
 	"trimSuffix":     trimSuffix,
 	"trimPrefix":     trimPrefix,
 	"spilti":         spilti,
+	"in":             in,
 }
 
 func join(a interface{}, step string) interface{} {
@@ -75,4 +76,13 @@ func trimPrefix(s, prefix string) string {
 
 func spilti(s, step string, index int) string {
 	return strings.Split(s, step)[index]
+}
+
+func in(arr []string, s string) bool {
+	for _, a := range arr {
+		if a == s {
+			return true
+		}
+	}
+	return false
 }
