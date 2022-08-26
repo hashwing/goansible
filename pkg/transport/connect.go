@@ -74,7 +74,7 @@ func (conn *connection) Close() error {
 }
 
 func (conn *connection) Exec(ctx context.Context, withTerminal bool, fn model.ExecCallbackFunc) (string, error) {
-	sess, err := newSession(ctx, conn.client, withTerminal, fn, conn.sudoPasswd)
+	sess, err := newSession(ctx, conn.client, withTerminal, fn, conn)
 	if err != nil {
 		return "", fmt.Errorf("failed to create new session: %s", err)
 	}
@@ -134,6 +134,10 @@ func (conn *connection) CopyFile(ctx context.Context, src io.Reader, size int64,
 	// 	fd.Write(buf[:n])
 	// }
 	return err
+}
+
+func (conn *connection) IsSudo() bool {
+	return len(conn.sudoPasswd) > 0
 }
 
 // Copies the contents of src to dest on a remote host

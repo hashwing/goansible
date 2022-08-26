@@ -78,9 +78,9 @@ func spilti(s, step string, index int) string {
 	return strings.Split(s, step)[index]
 }
 
-func in(arr []string, s string) bool {
+func in(s string, arr []interface{}) bool {
 	for _, a := range arr {
-		if a == s {
+		if a.(string) == s {
 			return true
 		}
 	}

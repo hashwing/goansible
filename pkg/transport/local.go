@@ -153,3 +153,7 @@ func (conn *LocalCmd) CopyFile(ctx context.Context, src io.Reader, size int64, d
 	_, err = io.Copy(dstFile, src)
 	return err
 }
+
+func (conn *LocalCmd) IsSudo() bool {
+	return false
+}
