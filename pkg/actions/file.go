@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/uuid"
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/common"
 	"golang.org/x/sync/errgroup"
@@ -58,9 +59,26 @@ func (a *FileAction) Run(ctx context.Context, conn model.Connection, conf model.
 	if mode == "" {
 		mode = "0644"
 	}
-	err = conn.CopyFile(ctx, f, stat.Size(), parseAction.Dest, mode)
+	dest := parseAction.Dest
+	if conn.IsSudo() {
+		dest = "/tmp/goansible_file_" + uuid.NewString()
+	}
+	err = conn.CopyFile(ctx, f, stat.Size(), dest, mode)
 	if err != nil {
 		return "", fmt.Errorf("failed to copy file %s to %s error: %v", parseAction.Src, parseAction.Dest, err)
+	}
+	if conn.IsSudo() {
+		output, err := conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
+			return sess.Start(
+				fmt.Sprintf("mv %s %s", dest, parseAction.Dest),
+			), nil
+		})
+		if err != nil {
+			return output, fmt.Errorf(
+				"failed to move the file to %s -> %s, %v",
+				dest, parseAction.Dest, err,
+			)
+		}
 	}
 
 	if parseAction.Owner != "" && parseAction.Group != "" {

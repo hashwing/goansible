@@ -3,6 +3,7 @@ module github.com/hashwing/goansible
 go 1.12
 
 require (
+	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/antonmedv/expr v1.9.0
 	github.com/bitfield/script v0.20.2 // indirect
 	github.com/cheggaaa/pb/v3 v3.1.0

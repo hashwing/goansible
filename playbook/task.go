@@ -21,6 +21,7 @@ const (
 	sshHost    = "ansible_ssh_host"
 	sshPort    = "ansible_ssh_port"
 	sshSudoPwd = "ansible_ssh_sudopass"
+	sshLocal   = "ansible_ssh_local"
 )
 
 func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interface{}, vars map[string]interface{}, conf model.Config) error {
@@ -254,7 +255,12 @@ func initConn(gs map[string]*model.Group, name string) error {
 
 func connect(h *model.Host) (model.Connection, error) {
 	if h.Name == "localhost" {
-		return nil, nil
+		return transport.ConnectCmd(), nil
+	}
+	if isLocal, ok := h.HostVars[sshLocal]; ok {
+		if isLocal.(bool) {
+			return transport.ConnectCmd(), nil
+		}
 	}
 	host, ok := h.HostVars[sshHost]
 	if !ok {
@@ -291,8 +297,8 @@ func connect(h *model.Host) (model.Connection, error) {
 }
 
 func getConn(name string) (model.Connection, error) {
-	if name == "localhost" {
-		return transport.ConnectCmd(), nil
-	}
+	// if name == "localhost" {
+	// 	return transport.ConnectCmd(), nil
+	// }
 	return globalConns[name], nil
 }

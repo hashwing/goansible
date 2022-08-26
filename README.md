@@ -157,6 +157,8 @@ goansible 内置部分函数：
 
 - minus: 减，`{{ minus  .Values.a  .Values.b }}`
 
+[第三方函数]('http://masterminds.github.io/sprig/')
+
 二、循环
 
 ```yaml

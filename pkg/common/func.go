@@ -3,17 +3,22 @@ package common
 import (
 	"strings"
 	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
 )
 
-var funcMap = template.FuncMap{
-	"join":           join,
-	"plus":           plus,
-	"minus":          minus,
-	"join_groupvars": join_groupvars,
-	"trimSuffix":     trimSuffix,
-	"trimPrefix":     trimPrefix,
-	"spilti":         spilti,
-	"in":             in,
+var funcMap template.FuncMap
+
+func init() {
+	funcMap = sprig.TxtFuncMap()
+	funcMap["join"] = join
+	funcMap["plus"] = plus
+	funcMap["minus"] = minus
+	funcMap["join_groupvars"] = join_groupvars
+	funcMap["trimSuffix"] = trimSuffix
+	funcMap["trimPrefix"] = trimPrefix
+	funcMap["spilti"] = spilti
+	funcMap["in"] = in
 }
 
 func join(a interface{}, step string) interface{} {
