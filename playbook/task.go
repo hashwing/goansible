@@ -26,7 +26,7 @@ const (
 
 func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interface{}, vars map[string]interface{}, conf model.Config) error {
 	termutil.FullInfo("Playbook [%s] ", "=", p.Name)
-	if !TagFilter(conf.Tags, p.Tags) {
+	if (conf.IsUntag && TagFilter(conf.Tags, p.Tags)) || (!conf.IsUntag && !TagFilter(conf.Tags, p.Tags)) {
 		termutil.Printf("slip: tag filter\n")
 		return nil
 	}
@@ -96,11 +96,32 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 			t.Tags = p.Tags
 		}
 		if t.Include != "" {
-			if !TagFilter(conf.Tags, t.Tags) {
+			if (conf.IsUntag && TagFilter(conf.Tags, t.Tags)) || (!conf.IsUntag && !TagFilter(conf.Tags, t.Tags)) {
 				termutil.Printf("slip: tag filter\n")
 				continue
 			}
 			itasks, err := FileToTasks(t.Include, conf)
+			if err != nil {
+				return err
+			}
+			for _, itask := range itasks {
+				err := p.runTask(itask, groups, groupVars, g, conf)
+				if err != nil {
+					if itask.IgnoreError {
+						termutil.Printf("ignore error ...\n")
+						continue
+					}
+					return err
+				}
+			}
+			continue
+		}
+		if t.Playbook != "" {
+			if (conf.IsUntag && TagFilter(conf.Tags, t.Tags)) || (!conf.IsUntag && !TagFilter(conf.Tags, t.Tags)) {
+				termutil.Printf("slip: tag filter\n")
+				continue
+			}
+			itasks, err := PlaybookToTasks(t.Playbook, conf)
 			if err != nil {
 				return err
 			}
@@ -132,7 +153,7 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 
 func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
 	termutil.FullPrintf("Task [%s] ", "*", t.Name)
-	if !TagFilter(conf.Tags, t.Tags) {
+	if (conf.IsUntag && TagFilter(conf.Tags, t.Tags)) || (!conf.IsUntag && !TagFilter(conf.Tags, t.Tags)) {
 		termutil.Printf("slip: tag filter\n")
 		return nil
 	}

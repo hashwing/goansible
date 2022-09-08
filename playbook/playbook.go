@@ -36,6 +36,7 @@ type Task struct {
 	Directory   *actions.DirectoryAction `yaml:"directory"`
 	When        string                   `yaml:"when"`
 	Include     string                   `yaml:"include"`
+	Playbook    string                   `yaml:"playbook"`
 	IgnoreError bool                     `yaml:"ignore_error"`
 	Tag         string                   `yaml:"tag"`
 	Cert        *actions.CertAction      `yaml:"cert"`

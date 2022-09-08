@@ -41,3 +41,21 @@ func FilesToValues(fs []string, conf model.Config) (map[string]interface{}, erro
 	}
 	return vals, nil
 }
+
+func PlaybookToTasks(s string, conf model.Config) ([]Task, error) {
+	fileContents, err := ioutil.ReadFile(conf.PlaybookFolder + "/" + s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open playbook file: %s", err)
+	}
+
+	var ps []Playbook
+	err = yaml.Unmarshal(fileContents, &ps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal playbook contents: %s", err)
+	}
+	tasks := make([]Task, 0)
+	for _, p := range ps {
+		tasks = append(tasks, p.Tasks...)
+	}
+	return tasks, nil
+}

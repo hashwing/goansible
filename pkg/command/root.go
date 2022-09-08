@@ -25,6 +25,10 @@ func NewRoot() {
 			if cfg.Tag != "" {
 				cfg.Tags = strings.Split(cfg.Tag, ",")
 			}
+			if cfg.Untag != "" {
+				cfg.Tags = strings.Split(cfg.Untag, ",")
+				cfg.IsUntag = true
+			}
 			inv, err := inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
 			if err != nil {
 				if !os.IsNotExist(err) {
@@ -52,6 +56,7 @@ func NewRoot() {
 	rootCmd.PersistentFlags().StringVar(&cfg.InvFile, "i", "values.yaml", "specify inventory file in a YAML file")
 	rootCmd.PersistentFlags().StringVar(&cfg.PlaybookFile, "p", "index.yaml", "specify playbook file in a YAML file")
 	rootCmd.PersistentFlags().StringVar(&cfg.Tag, "tags", "", "use to tag filter")
+	rootCmd.PersistentFlags().StringVar(&cfg.Untag, "untags", "", "use to tag unfilter")
 	rootCmd.AddCommand(newRunShellCmd())
 	rootCmd.AddCommand(newRunInitCmd())
 	if err := rootCmd.Execute(); err != nil {

@@ -145,7 +145,7 @@ func (conn *LocalCmd) CopyFile(ctx context.Context, src io.Reader, size int64, d
 	if err != nil {
 		return err
 	}
-	dstFile, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE, os.FileMode(modeInt))
+	dstFile, err := os.OpenFile(dest, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, os.FileMode(modeInt))
 	if err != nil {
 		return err
 	}
