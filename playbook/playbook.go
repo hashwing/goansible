@@ -3,10 +3,13 @@ package playbook
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/actions"
+	"github.com/hashwing/goansible/pkg/common"
+	"github.com/hashwing/goansible/pkg/inventory"
 	"github.com/hashwing/goansible/pkg/termutil"
 	"gopkg.in/yaml.v2"
 )
@@ -16,10 +19,17 @@ type Playbook struct {
 	Hosts          string                 `yaml:"hosts"`
 	Vars           map[string]interface{} `yaml:"vars"`
 	ImportPlaybook string                 `yaml:"import_playbook"`
+	SubPlaybook    *SubPlaybookOption     `yaml:"sub_playbook"`
 	IncludeValues  []string               `yaml:"include_values"`
 	Tasks          []Task                 `yaml:"tasks"`
 	Tag            string                 `yaml:"tag"`
 	Tags           []string               `yaml:"tags"`
+}
+
+type SubPlaybookOption struct {
+	WorkDir      string `yaml:"workdir"`
+	PlaybookFile string `yaml:"playbook"`
+	InvFile      string `yaml:"values"`
 }
 
 type Task struct {
@@ -111,14 +121,34 @@ func UnmarshalFromFile(playbookFile string) ([]*Playbook, error) {
 	return playbooks, nil
 }
 
-func Run(cfg model.Config, ps []*Playbook, inv model.Inventory) error {
-	gs, err := inv.Groups()
+func Run(cfg model.Config, customVars map[string]interface{}, gs map[string]*model.Group) error {
+	subinv, err := inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			termutil.Errorf(err.Error())
+			os.Exit(-1)
+		}
+		termutil.Changedf("inventory file '%s' not found, use default inventory", cfg.InvFile)
+		subinv = &model.DefaultInventory{}
+	}
+	subCustomVars, err := subinv.Vars()
 	if err != nil {
 		return err
 	}
-	customVars, err := inv.Vars()
+	if customVars != nil {
+		common.MergeValues(subCustomVars, customVars)
+	}
+
+	ps, err := UnmarshalFromFile(cfg.PlaybookFolder + "/" + cfg.PlaybookFile)
 	if err != nil {
-		return err
+		termutil.Errorf(err.Error())
+		os.Exit(-1)
+	}
+	if gs == nil {
+		gs, err = subinv.Groups()
+		if err != nil {
+			return err
+		}
 	}
 	defer func() {
 		if err := recover(); err != nil {
@@ -127,9 +157,9 @@ func Run(cfg model.Config, ps []*Playbook, inv model.Inventory) error {
 	}()
 	start := time.Now()
 	vars := make(map[string]interface{})
-	termutil.FullInfo("Start playbooks ", "=")
+	termutil.FullInfo(fmt.Sprintf("Start playbooks [%s] ", cfg.PlaybookFolder), "=")
 	for _, p := range ps {
-		err := p.Run(gs, customVars, vars, cfg)
+		err := p.Run(gs, subCustomVars, vars, cfg)
 		if err != nil {
 			return err
 		}
@@ -143,7 +173,7 @@ func Run(cfg model.Config, ps []*Playbook, inv model.Inventory) error {
 		s = cost % 60
 		m = cost / 60
 	}
-	termutil.FullInfo("Finish playbooks ", "=")
+	termutil.FullInfo(fmt.Sprintf("Finish playbooks [%s] ", cfg.PlaybookFolder), "=")
 	termutil.Printf("start: %v", start)
 	termutil.Printf("end: %v", end)
 	termutil.Printf("cost: %dm%ds\n", m, s)

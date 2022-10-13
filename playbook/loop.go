@@ -7,53 +7,56 @@ import (
 	"github.com/hashwing/goansible/pkg/common"
 )
 
-func Loop(loop interface{}, vars *model.Vars) map[interface{}]interface{} {
+func Loop(loop interface{}, vars *model.Vars) []LoopRes {
 	switch reflect.TypeOf(loop).Kind() {
 	case reflect.Slice:
-		res := make(map[interface{}]interface{})
+		res := make([]LoopRes, 0)
 		for i, item := range loop.([]interface{}) {
-			res[i] = common.ParseTplWithPanic(item.(string), vars)
+			res = append(res, LoopRes{
+				Item:    common.ParseTplWithPanic(item.(string), vars),
+				ItemKey: i,
+			})
 		}
 		return res
 	case reflect.String:
 		loopv, res := common.GetVar(loop.(string), vars)
 		if res {
-			res := make(map[interface{}]interface{})
+			res := make([]LoopRes, 0)
 			switch reflect.TypeOf(loopv).Kind() {
 			case reflect.Slice:
 				for i, item := range loopv.([]interface{}) {
-					res[i] = item
+					res = append(res, LoopRes{
+						Item:    item,
+						ItemKey: i,
+					})
 				}
 				return res
 			case reflect.Map:
-				res := make(map[interface{}]interface{})
 				v := reflect.ValueOf(loopv)
 				for _, k := range v.MapKeys() {
-					res[k.Interface()] = v.MapIndex(k).Interface()
+					res = append(res, LoopRes{
+						Item:    v.MapIndex(k).Interface(),
+						ItemKey: k.Interface(),
+					})
 				}
 				return res
 			}
 		}
 	case reflect.Map:
-		res := make(map[interface{}]interface{})
+		res := make([]LoopRes, 0)
 		v := reflect.ValueOf(loop)
 		for _, k := range v.MapKeys() {
-			res[k.Interface()] = v.MapIndex(k).Interface()
+			res = append(res, LoopRes{
+				Item:    v.MapIndex(k).Interface(),
+				ItemKey: k,
+			})
 		}
 		return res
-		// if v, ok := loop.(map[string]interface{}); ok {
-		// 	for k, vv := range v {
-		// 		res[k] = vv
-		// 	}
-		// 	return res
-		// }
-		// if v, ok := loop.(map[string]map[string]interface{}); ok {
-		// 	for k, vv := range v {
-		// 		res[k] = vv
-		// 	}
-		// 	return res
-		// }
-		// return loop.(map[interface{}]interface{})
 	}
 	return nil
+}
+
+type LoopRes struct {
+	ItemKey interface{}
+	Item    interface{}
 }

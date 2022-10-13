@@ -48,6 +48,24 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 		}
 		return nil
 	}
+	if p.SubPlaybook != nil {
+		subConf := model.Config{
+			PlaybookFolder: conf.PlaybookFolder + "/" + p.SubPlaybook.WorkDir,
+			Tag:            conf.Tag,
+			Tags:           conf.Tags,
+			Untag:          conf.Untag,
+			IsUntag:        conf.IsUntag,
+			PlaybookFile:   "index.yaml",
+			InvFile:        "values.yaml",
+		}
+		if p.SubPlaybook.PlaybookFile != "" {
+			subConf.PlaybookFile = p.SubPlaybook.PlaybookFile
+		}
+		if p.SubPlaybook.InvFile != "" {
+			subConf.InvFile = p.SubPlaybook.InvFile
+		}
+		return Run(subConf, customVars, gs)
+	}
 	if p.Hosts == "" {
 		p.Hosts = "all"
 	}
@@ -186,14 +204,19 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 					return
 				}
 			}
-			loops := make(map[interface{}]interface{})
-			loops["0"] = ""
+			//loops := make([]LoopRes,0)
+			loops := []LoopRes{
+				LoopRes{
+					Item:    "",
+					ItemKey: "0",
+				},
+			}
 			if t.Loop != nil {
 				loops = Loop(t.Loop, vars)
 			}
-			for k, item := range loops {
-				vars.Item = item
-				vars.ItemKey = k
+			for _, item := range loops {
+				vars.Item = item.Item
+				vars.ItemKey = item.ItemKey
 
 				conn, err := getConn(h.Name)
 				if err != nil {
@@ -220,16 +243,19 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 					// }
 				}
 				if t.Debug != "" {
-					info, err := common.ParseTpl(t.Debug, vars)
-					if err != nil {
-						termutil.Errorf("error: [%s], msg: %v, %s", h.Name, err, info)
-						globalErr = err
-						return
+					info := stdout
+					if t.Debug != "stdout" {
+						info, err = common.ParseTpl(t.Debug, vars)
+						if err != nil {
+							termutil.Errorf("error: [%s], msg: %v, %s", h.Name, err, info)
+							globalErr = err
+							return
+						}
 					}
 					termutil.Changedf("debug:\n%s", info)
 				}
 				if t.Loop != nil {
-					termutil.Successf("success: [%s] item => %+v", h.Name, item)
+					termutil.Successf("success: [%s] item => %+v", h.Name, item.Item)
 				}
 			}
 			termutil.Successf("success: [%s]", h.Name)

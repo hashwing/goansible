@@ -2,6 +2,8 @@ package actions
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -35,12 +37,64 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 			}
 			options["data"] = "'" + string(data) + "'"
 			continue
+		case "data-json":
+			d := strings.TrimSpace(common.ParseTplWithPanic(v, vars))
+			if strings.HasPrefix(d, "{") {
+				var v map[string]interface{}
+				err := json.Unmarshal([]byte(d), &v)
+				if err != nil {
+					return nil, err
+				}
+				j, _ := json.Marshal(v)
+				b, _ := json.Marshal(string(j))
+				options["data"] = string(b)
+			}
+			if strings.HasPrefix(d, "[") {
+				var v []interface{}
+				err := json.Unmarshal([]byte(d), &v)
+				if err != nil {
+					return nil, err
+				}
+				j, _ := json.Marshal(v)
+				b, _ := json.Marshal(string(j))
+				options["data"] = string(b)
+			}
+		case "data-json-file":
+			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, v))
+			if err != nil {
+				return nil, err
+			}
+			d := strings.TrimSpace(common.ParseTplWithPanic(string(data), vars))
+			if strings.HasPrefix(d, "{") {
+				var v map[string]interface{}
+				err := json.Unmarshal([]byte(d), &v)
+				if err != nil {
+					return nil, err
+				}
+				j, _ := json.Marshal(v)
+				b, _ := json.Marshal(string(j))
+				options["data"] = string(b)
+			}
+			if strings.HasPrefix(d, "[") {
+				var v []interface{}
+				err := json.Unmarshal([]byte(d), &v)
+				if err != nil {
+					return nil, err
+				}
+				j, _ := json.Marshal(v)
+				b, _ := json.Marshal(string(j))
+				options["data"] = string(b)
+			}
 		case "data-file":
 			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, v))
 			if err != nil {
 				return nil, err
 			}
-			options["data"] = "'" + common.ParseTplWithPanic(string(data), vars) + "'"
+			b, err := json.Marshal(common.ParseTplWithPanic(string(data), vars))
+			if err != nil {
+				return nil, err
+			}
+			options["data"] = string(b)
 		case "data-yaml-file":
 			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, v))
 			if err != nil {
@@ -53,7 +107,11 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 			}
 			options["data"] = "'" + string(data) + "'"
 		case "data":
-			options["data"] = "'" + v + "'"
+			b, err := json.Marshal(common.ParseTplWithPanic(string(v), vars))
+			if err != nil {
+				return nil, err
+			}
+			options["data"] = string(b)
 		default:
 			options[key] = common.ParseTplWithPanic(v, vars)
 		}
@@ -78,6 +136,7 @@ func (a *CurlAction) Run(ctx context.Context, conn model.Connection, conf model.
 	options = append(options, newa.URL)
 	return conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
 		comm := strings.Join(options, " ")
+		fmt.Println(comm)
 		return sess.Start(comm), nil
 	})
 }

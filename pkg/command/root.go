@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/hashwing/goansible/model"
-	"github.com/hashwing/goansible/pkg/inventory"
 	"github.com/hashwing/goansible/pkg/termutil"
 	"github.com/hashwing/goansible/playbook"
 	"github.com/spf13/cobra"
@@ -29,22 +28,22 @@ func NewRoot() {
 				cfg.Tags = strings.Split(cfg.Untag, ",")
 				cfg.IsUntag = true
 			}
-			inv, err := inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
-			if err != nil {
-				if !os.IsNotExist(err) {
-					termutil.Errorf(err.Error())
-					os.Exit(-1)
-				}
-				termutil.Changedf("inventory file '%s' not found, use default inventory", cfg.InvFile)
-				inv = &model.DefaultInventory{}
-			}
+			// inv, err := inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
+			// if err != nil {
+			// 	if !os.IsNotExist(err) {
+			// 		termutil.Errorf(err.Error())
+			// 		os.Exit(-1)
+			// 	}
+			// 	termutil.Changedf("inventory file '%s' not found, use default inventory", cfg.InvFile)
+			// 	inv = &model.DefaultInventory{}
+			// }
 
-			ps, err := playbook.UnmarshalFromFile(cfg.PlaybookFolder + "/" + cfg.PlaybookFile)
-			if err != nil {
-				termutil.Errorf(err.Error())
-				os.Exit(-1)
-			}
-			err = playbook.Run(cfg, ps, inv)
+			// ps, err := playbook.UnmarshalFromFile(cfg.PlaybookFolder + "/" + cfg.PlaybookFile)
+			// if err != nil {
+			// 	termutil.Errorf(err.Error())
+			// 	os.Exit(-1)
+			// }
+			err := playbook.Run(cfg, nil, nil)
 			if err != nil {
 				termutil.Errorf(err.Error())
 				os.Exit(-1)

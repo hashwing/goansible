@@ -15,8 +15,11 @@ type SetfaceAction string
 func (a *SetfaceAction) Run(ctx context.Context, conn model.Connection, conf model.Config, vars *model.Vars) (string, error) {
 	params := strings.Split(string(*a), "=")
 	if len(params) > 1 {
-		data, err := expr.Eval(strings.Join(params[1:], "="), vars)
-		//data, err := common.ParseTpl(strings.Join(params[1:], "="), vars)
+		d, err := common.ParseTpl(strings.Join(params[1:], "="), vars)
+		if err != nil {
+			return "", err
+		}
+		data, err := expr.Eval(d, vars)
 		if err != nil {
 			return "", err
 		}
