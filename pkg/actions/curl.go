@@ -15,6 +15,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var datab = `@- << EOF
+%s
+EOF
+`
+
 type CurlAction struct {
 	URL     string            `yaml:"url"`
 	Options map[string]string `yaml:"options"`
@@ -107,11 +112,7 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 			}
 			options["data"] = "'" + string(data) + "'"
 		case "data":
-			b, err := json.Marshal(common.ParseTplWithPanic(string(v), vars))
-			if err != nil {
-				return nil, err
-			}
-			options["data"] = string(b)
+			options["data-binary"] = fmt.Sprintf(datab, common.ParseTplWithPanic(string(v), vars))
 		default:
 			options[key] = common.ParseTplWithPanic(v, vars)
 		}
@@ -129,11 +130,21 @@ func (a *CurlAction) Run(ctx context.Context, conn model.Connection, conf model.
 	}
 	options := make([]string, 0)
 	options = append(options, "curl")
+	dataBinary := ""
 	for k, v := range newa.Options {
+		if k == "data-binary" {
+			dataBinary = v
+			continue
+		}
 		options = append(options, "--"+k)
 		options = append(options, v)
 	}
+
 	options = append(options, newa.URL)
+	if dataBinary != "" {
+		options = append(options, "--data-binary")
+		options = append(options, dataBinary)
+	}
 	return conn.Exec(ctx, true, func(sess model.Session) (error, *errgroup.Group) {
 		comm := strings.Join(options, " ")
 		fmt.Println(comm)
