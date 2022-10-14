@@ -43,7 +43,7 @@ func NewRoot() {
 			// 	termutil.Errorf(err.Error())
 			// 	os.Exit(-1)
 			// }
-			err := playbook.Run(cfg, nil, nil)
+			_, err := playbook.Run(cfg, nil, nil)
 			if err != nil {
 				termutil.Errorf(err.Error())
 				os.Exit(-1)

@@ -12,10 +12,18 @@ import (
 )
 
 type ReqAction struct {
-	URL     string `yaml:"url"`
-	Method  string `yaml:"method"`
-	Timeout int64  `yaml:"timeout"`
-	Body    string `yaml:"body"`
+	URL             string            `yaml:"url"`
+	Method          string            `yaml:"method"`
+	Timeout         int64             `yaml:"timeout"`
+	Body            string            `yaml:"body"`
+	Headers         map[string]string `yaml:"headers"`
+	BaseAuth        ReqBaseAuth       `yaml:"baseAuth"`
+	BearerAuthToken string            `yaml:"bearerToken"`
+}
+
+type ReqBaseAuth struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 func (a *ReqAction) parse(vars *model.Vars) (*ReqAction, error) {
@@ -50,7 +58,14 @@ func (a *ReqAction) Run(ctx context.Context, conn model.Connection, conf model.C
 	if err != nil {
 		return "", err
 	}
-	resp := r.SetBody(parseAction.Body).Do()
+	if parseAction.BaseAuth.Username != "" {
+		r = r.SetBasicAuth(parseAction.BaseAuth.Username, parseAction.BaseAuth.Password)
+	}
+	if parseAction.BearerAuthToken != "" {
+		r.SetBearerAuthToken(parseAction.BearerAuthToken)
+	}
+	resp := r.SetHeaders(parseAction.Headers).
+		SetBody(parseAction.Body).Do()
 	if resp.Err != nil {
 		return "", resp.Err
 	}
@@ -61,16 +76,19 @@ func (a *ReqAction) Run(ctx context.Context, conn model.Connection, conf model.C
 }
 
 func setURL(client *req.Client, method, url string) (*req.Request, error) {
+	if method == "" {
+		method = "GET"
+	}
 	switch method {
-	case "post":
+	case "POST":
 		return client.Post(url), nil
-	case "get":
+	case "GET":
 		return client.Get(url), nil
-	case "put":
+	case "PUT":
 		return client.Put(url), nil
-	case "patch":
+	case "PATCH":
 		return client.Patch(url), nil
-	case "delete":
+	case "DELETE":
 		return client.Delete(url), nil
 	}
 	return nil, fmt.Errorf("not support method %s", method)

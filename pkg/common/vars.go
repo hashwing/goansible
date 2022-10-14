@@ -33,7 +33,7 @@ func GetVar(s string, vars *model.Vars) (interface{}, bool) {
 	defer mutex.Unlock()
 
 	rs := strings.Split(s, ".")
-	if len(rs) > 1 {
+	if len(rs) > 0 {
 		var p map[string]interface{}
 		switch rs[0] {
 		case "hostvars":
@@ -49,6 +49,9 @@ func GetVar(s string, vars *model.Vars) (interface{}, bool) {
 			}
 		default:
 			return nil, false
+		}
+		if len(rs) == 1 {
+			return p, true
 		}
 		for i := 1; i < len(rs); i++ {
 			key := rs[i]

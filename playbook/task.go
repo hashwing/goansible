@@ -64,7 +64,8 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 		if p.SubPlaybook.InvFile != "" {
 			subConf.InvFile = p.SubPlaybook.InvFile
 		}
-		return Run(subConf, customVars, gs)
+		_, err := Run(subConf, customVars, gs)
+		return err
 	}
 	if p.Hosts == "" {
 		p.Hosts = "all"

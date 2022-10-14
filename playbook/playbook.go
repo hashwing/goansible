@@ -57,6 +57,7 @@ type Task struct {
 	Lua         *actions.LuaAction       `yaml:"lua"`
 	LuaFile     *actions.LuaFileAction   `yaml:"luafile"`
 	Tags        []string                 `yaml:"tags"`
+	Req         *actions.ReqAction       `yaml:"req"`
 }
 
 func (t *Task) Action() model.Action {
@@ -100,6 +101,9 @@ func (t *Task) Action() model.Action {
 	if t.LuaFile != nil {
 		action = t.LuaFile
 	}
+	if t.Req != nil {
+		action = t.Req
+	}
 	if action == nil {
 		action = new(actions.NoneAction)
 	}
@@ -121,19 +125,26 @@ func UnmarshalFromFile(playbookFile string) ([]*Playbook, error) {
 	return playbooks, nil
 }
 
-func Run(cfg model.Config, customVars map[string]interface{}, gs map[string]*model.Group) error {
-	subinv, err := inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			termutil.Errorf(err.Error())
-			os.Exit(-1)
+func Run(cfg model.Config, customVars map[string]interface{}, gs map[string]*model.Group) (map[string]interface{}, error) {
+	var err error
+	var subinv model.Inventory
+	if cfg.InvFile != "" {
+		subinv, err = inventory.NewYaml(cfg.PlaybookFolder + "/" + cfg.InvFile)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				termutil.Errorf(err.Error())
+				return nil, err
+			}
+			termutil.Changedf("inventory file '%s' not found, use default inventory", cfg.InvFile)
+			subinv = &model.DefaultInventory{}
 		}
-		termutil.Changedf("inventory file '%s' not found, use default inventory", cfg.InvFile)
+	} else {
 		subinv = &model.DefaultInventory{}
 	}
+
 	subCustomVars, err := subinv.Vars()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if customVars != nil {
 		common.MergeValues(subCustomVars, customVars)
@@ -142,12 +153,12 @@ func Run(cfg model.Config, customVars map[string]interface{}, gs map[string]*mod
 	ps, err := UnmarshalFromFile(cfg.PlaybookFolder + "/" + cfg.PlaybookFile)
 	if err != nil {
 		termutil.Errorf(err.Error())
-		os.Exit(-1)
+		return nil, err
 	}
 	if gs == nil {
 		gs, err = subinv.Groups()
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	defer func() {
@@ -161,7 +172,7 @@ func Run(cfg model.Config, customVars map[string]interface{}, gs map[string]*mod
 	for _, p := range ps {
 		err := p.Run(gs, subCustomVars, vars, cfg)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		vars = p.Vars
 	}
@@ -177,5 +188,5 @@ func Run(cfg model.Config, customVars map[string]interface{}, gs map[string]*mod
 	termutil.Printf("start: %v", start)
 	termutil.Printf("end: %v", end)
 	termutil.Printf("cost: %dm%ds\n", m, s)
-	return nil
+	return vars, nil
 }
