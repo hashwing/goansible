@@ -110,53 +110,68 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 		common.MergeValues(p.Vars, customVars)
 	}
 
-	for _, t := range p.Tasks {
+	for _, tt := range p.Tasks {
+		t := tt.Get()
 		if len(t.Tags) == 0 {
 			t.Tags = p.Tags
 		}
-		if t.Include != "" {
-			if (conf.IsUntag && TagFilter(conf.Tags, t.Tags)) || (!conf.IsUntag && !TagFilter(conf.Tags, t.Tags)) {
-				termutil.Printf("slip: tag filter\n")
-				continue
-			}
-			itasks, err := FileToTasks(t.Include, conf)
-			if err != nil {
-				return err
-			}
-			for _, itask := range itasks {
-				err := p.runTask(itask, groups, groupVars, g, conf)
-				if err != nil {
-					if itask.IgnoreError {
-						termutil.Printf("ignore error ...\n")
-						continue
+		pctxvars := make(map[string]interface{})
+		if cf, ok := t.Action().(*CustomFunc); ok {
+			if mas, ok := cf.Action.(*MutiActions); ok {
+				var f = func(vars *model.Vars) (string, error) {
+					ctxvars := parseCtx(cf.Ctx, vars)
+					for _, mtask := range mas.Tasks {
+						itask := mtask.Get()
+						ctxvars, err = p.runTask(itask, groups, groupVars, g, conf, ctxvars)
+						if err != nil {
+							if itask.IgnoreError {
+								termutil.Printf("ignore error ...\n")
+								continue
+							}
+							return "", err
+						}
 					}
-					return err
+					copyCtx(pctxvars, ctxvars)
+					return "", nil
 				}
+				t.CustomAction = &DoFuncActions{F: f}
 			}
-			continue
 		}
-		if t.Playbook != "" {
-			if (conf.IsUntag && TagFilter(conf.Tags, t.Tags)) || (!conf.IsUntag && !TagFilter(conf.Tags, t.Tags)) {
-				termutil.Printf("slip: tag filter\n")
-				continue
-			}
-			itasks, err := PlaybookToTasks(t.Playbook, conf)
-			if err != nil {
-				return err
-			}
-			for _, itask := range itasks {
-				err := p.runTask(itask, groups, groupVars, g, conf)
-				if err != nil {
-					if itask.IgnoreError {
-						termutil.Printf("ignore error ...\n")
-						continue
+		if t.Include != "" || len(t.Tasks) > 0 || t.Playbook != "" {
+			var f = func(vars *model.Vars) (string, error) {
+				itasks := ConvMapToTasks(t.Tasks)
+				if t.Include != "" {
+					itasks, err = FileToTasks(t.Include, conf)
+					if err != nil {
+						return "", err
 					}
-					return err
+				} else if t.Playbook != "" {
+					itasks, err = PlaybookToTasks(t.Playbook, conf)
+					if err != nil {
+						return "", err
+					}
+				} else if t.Switch != nil {
+					itasks = DoSwitch(t.Switch, vars)
 				}
+				ctxvars := LoopRes{
+					Item:    vars.Item,
+					ItemKey: vars.ItemKey,
+				}
+				for _, itask := range itasks {
+					_, err := p.runTask(itask, groups, groupVars, g, conf, ctxvars)
+					if err != nil {
+						if itask.IgnoreError {
+							termutil.Printf("ignore error ...\n")
+							continue
+						}
+						return "", err
+					}
+				}
+				return "", nil
 			}
-			continue
+			t.CustomAction = &DoFuncActions{F: f}
 		}
-		err := p.runTask(t, groups, groupVars, g, conf)
+		_, err := p.runTask(t, groups, groupVars, g, conf, pctxvars)
 		if err != nil {
 			if t.IgnoreError {
 				termutil.Printf("ignore error ...\n")
@@ -170,15 +185,15 @@ func (p *Playbook) Run(gs map[string]*model.Group, customVars map[string]interfa
 	return nil
 }
 
-func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config) error {
+func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[string]map[string]interface{}, group *model.Group, conf model.Config, ctxvars interface{}) (interface{}, error) {
 	termutil.FullPrintf("Task [%s] ", "*", t.Name)
 	if (conf.IsUntag && TagFilter(conf.Tags, t.Tags)) || (!conf.IsUntag && !TagFilter(conf.Tags, t.Tags)) {
 		termutil.Printf("slip: tag filter\n")
-		return nil
+		return ctxvars, nil
 	}
 	action := t.Action()
 	if action == nil {
-		return nil
+		return ctxvars, nil
 	}
 
 	var wg sync.WaitGroup
@@ -189,7 +204,6 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 	}
 	var globalErr error
 	start := time.Now()
-
 	for _, h := range group.Hosts {
 		go func(h *model.Host) {
 			defer wg.Done()
@@ -198,6 +212,7 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 				GroupVars: groupVars,
 				HostVars:  groupVars[h.Name],
 				Groups:    groups,
+				Ctx:       ctxvars,
 			}
 			if t.When != "" {
 				if !When(t.When, vars) {
@@ -243,6 +258,9 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 					// 	}
 					// }
 				}
+				if t.Setface != nil {
+					t.Setface.Run(context.Background(), conn, conf, vars)
+				}
 				if t.Debug != "" {
 					info := stdout
 					if t.Debug != "stdout" {
@@ -268,7 +286,7 @@ func (p *Playbook) runTask(t Task, groups map[string]interface{}, groupVars map[
 	wg.Wait()
 	end := time.Now()
 	termutil.Debugf("cost: %ds start: %v end: %v", end.Unix()-start.Unix(), start.Format("2006-01-02 15:04:05"), end.Format("2006-01-02 15:04:05"))
-	return globalErr
+	return ctxvars, globalErr
 }
 
 var globalConns map[string]model.Connection = make(map[string]model.Connection)

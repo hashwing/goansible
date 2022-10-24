@@ -12,6 +12,7 @@ require (
 	github.com/icza/dyno v0.0.0-20210726202311-f1bafe5d9996 // indirect
 	github.com/imroc/req/v3 v3.22.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pkg/sftp v1.13.5
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.5.0

@@ -469,3 +469,75 @@ goansible 内置部分函数：
 ```
 
 - lua : lua 脚本，可以使用 `values ` `hostvars` `groupvars` `groups`
+
+12、自定义yaml模块
+
+以创建 ls 模块为例，创建目录`modules` , 并新建`modules/ls.yaml`, 内容如下
+
+```yaml
+- name: list dir
+  shell: ls {{ .Ctx.dir }}
+```
+
+Ctx 为模块上下文，通过`.Ctx.dir`获取传入的变量`json`
+
+使用自定义模块
+
+```yaml
+- name: ls
+  ls:
+    dir: /tmp
+
+```
+
+13、自定义JS模块
+
+以创建 split 模块为例，创建目录`modules` , 并新建`modules/split.js`, 内容如下
+
+```js
+ ctx.res = ctx.data.split(',')
+```
+
+Ctx 为模块上下文，通过`.Ctx.data`获取传入的变量`data`
+
+使用自定义模块
+
+```yaml
+- name: split str
+  split:
+    data: "1,2,3"
+  setface: "values.arr=ctx.res"
+  debug: "{{ .Values.arr }}"
+
+```
+
+14、自定义JS库
+
+以创建 strings 库为例，创建目录`libs` , 并新建`libs/strings.js`, 内容如下
+
+```js
+
+class Strings {
+  random(e) {    
+      e = e || 32;
+      var t = "ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678",
+      a = t.length,
+      n = "";
+      for (i = 0; i < e; i++) n += t.charAt(Math.floor(Math.random() * a));
+      return n
+  }
+}
+
+var strings = new Strings()
+
+```
+
+使用自定义JS库
+
+```yaml
+- name: gen
+  js: |
+    values.a = strings.random(32)
+  debug: "{{ .Values.a }}"
+
+```

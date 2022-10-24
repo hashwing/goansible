@@ -16,9 +16,9 @@ import (
 var workDir = "."
 
 type Pipeline struct {
-	HTTPInput  HTTPInput  `yaml:"http_input"`
-	HTTPOutput HTTPOutput `yaml:"http_output"`
-	Playbook   string     `yaml:"playbook"`
+	HTTPInput  *HTTPInput  `yaml:"http_input"`
+	HTTPOutput *HTTPOutput `yaml:"http_output"`
+	Playbook   string      `yaml:"playbook"`
 }
 
 type HTTPInput struct {
@@ -64,6 +64,10 @@ func server(w http.ResponseWriter, r *http.Request) {
 			p = pv
 			break
 		}
+	}
+	if p.HTTPInput == nil {
+		w.WriteHeader(404)
+		return
 	}
 	vars := &model.Vars{
 		Values: make(map[string]interface{}),

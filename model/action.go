@@ -13,4 +13,5 @@ type Vars struct {
 	Groups    map[string]interface{}
 	Item      interface{}
 	ItemKey   interface{}
+	Ctx       interface{}
 }

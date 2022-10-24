@@ -21,7 +21,7 @@ type Playbook struct {
 	ImportPlaybook string                 `yaml:"import_playbook"`
 	SubPlaybook    *SubPlaybookOption     `yaml:"sub_playbook"`
 	IncludeValues  []string               `yaml:"include_values"`
-	Tasks          []Task                 `yaml:"tasks"`
+	Tasks          []TaskMap              `yaml:"tasks"`
 	Tag            string                 `yaml:"tag"`
 	Tags           []string               `yaml:"tags"`
 }
@@ -33,35 +33,42 @@ type SubPlaybookOption struct {
 }
 
 type Task struct {
-	Name        string                   `yaml:"name"`
-	FileAction  *actions.FileAction      `yaml:"file"`
-	Template    *actions.TemplateAction  `yaml:"template"`
-	ShellAction *actions.ShellAction     `yaml:"shell"`
-	StdOut      string                   `yaml:"stdout"`
-	Regexp      *actions.RegexpAction    `yaml:"regexp"`
-	Debug       string                   `yaml:"debug"`
-	Loop        interface{}              `yaml:"loop"`
-	Setface     *actions.SetfaceAction   `yaml:"setface"`
-	Until       *actions.UntilAction     `yaml:"until"`
-	Directory   *actions.DirectoryAction `yaml:"directory"`
-	When        string                   `yaml:"when"`
-	Include     string                   `yaml:"include"`
-	Playbook    string                   `yaml:"playbook"`
-	IgnoreError bool                     `yaml:"ignore_error"`
-	Tag         string                   `yaml:"tag"`
-	Cert        *actions.CertAction      `yaml:"cert"`
-	Once        bool                     `yaml:"once"`
-	Curl        *actions.CurlAction      `yaml:"curl"`
-	Js          *actions.JsAction        `yaml:"js"`
-	JsFile      *actions.JsFileAction    `yaml:"jsfile"`
-	Lua         *actions.LuaAction       `yaml:"lua"`
-	LuaFile     *actions.LuaFileAction   `yaml:"luafile"`
-	Tags        []string                 `yaml:"tags"`
-	Req         *actions.ReqAction       `yaml:"req"`
+	Name         string                   `yaml:"name"`
+	StdOut       string                   `yaml:"stdout"`
+	Debug        string                   `yaml:"debug"`
+	Loop         interface{}              `yaml:"loop"`
+	When         string                   `yaml:"when"`
+	Include      string                   `yaml:"include"`
+	Tasks        []TaskMap                `yaml:"tasks"`
+	Playbook     string                   `yaml:"playbook"`
+	IgnoreError  bool                     `yaml:"ignore_error"`
+	Tag          string                   `yaml:"tag"`
+	Tags         []string                 `yaml:"tags"`
+	Once         bool                     `yaml:"once"`
+	Switch       *SwitchAction            `yaml:"switch"`
+	FileAction   *actions.FileAction      `yaml:"file"`
+	Template     *actions.TemplateAction  `yaml:"template"`
+	ShellAction  *actions.ShellAction     `yaml:"shell"`
+	Regexp       *actions.RegexpAction    `yaml:"regexp"`
+	Setface      *actions.SetfaceAction   `yaml:"setface"`
+	Until        *actions.UntilAction     `yaml:"until"`
+	Directory    *actions.DirectoryAction `yaml:"directory"`
+	Cert         *actions.CertAction      `yaml:"cert"`
+	Curl         *actions.CurlAction      `yaml:"curl"`
+	Js           *actions.JsAction        `yaml:"js"`
+	JsFile       *actions.JsFileAction    `yaml:"jsfile"`
+	Lua          *actions.LuaAction       `yaml:"lua"`
+	LuaFile      *actions.LuaFileAction   `yaml:"luafile"`
+	Req          *actions.ReqAction       `yaml:"req"`
+	SetFunc      *SetFunc                 `yaml:"setfunc"`
+	CustomAction model.Action             `yaml:"-"`
 }
 
 func (t *Task) Action() model.Action {
 	var action model.Action
+	if t.CustomAction != nil {
+		action = t.CustomAction
+	}
 	if t.FileAction != nil {
 		action = t.FileAction
 	}
@@ -77,9 +84,9 @@ func (t *Task) Action() model.Action {
 	if t.Until != nil {
 		action = t.Until
 	}
-	if t.Setface != nil {
-		action = t.Setface
-	}
+	// if t.Setface != nil {
+	// 	action = t.Setface
+	// }
 	if t.Directory != nil {
 		action = t.Directory
 	}
@@ -104,6 +111,9 @@ func (t *Task) Action() model.Action {
 	if t.Req != nil {
 		action = t.Req
 	}
+	if t.SetFunc != nil {
+		action = t.SetFunc
+	}
 	if action == nil {
 		action = new(actions.NoneAction)
 	}
@@ -121,7 +131,6 @@ func UnmarshalFromFile(playbookFile string) ([]*Playbook, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal playbook contents: %s", err)
 	}
-
 	return playbooks, nil
 }
 
@@ -168,6 +177,8 @@ func Run(cfg model.Config, customVars map[string]interface{}, gs map[string]*mod
 	}()
 	start := time.Now()
 	vars := make(map[string]interface{})
+	LoadModules("modules", cfg)
+	LoadLibs("libs", cfg)
 	termutil.FullInfo(fmt.Sprintf("Start playbooks [%s] ", cfg.PlaybookFolder), "=")
 	for _, p := range ps {
 		err := p.Run(gs, subCustomVars, vars, cfg)

@@ -13,6 +13,8 @@ import (
 	"github.com/hashwing/goansible/pkg/common"
 )
 
+var LibStr = ""
+
 type JsAction string
 
 func (a *JsAction) Run(ctx context.Context, conn model.Connection, conf model.Config, vars *model.Vars) (string, error) {
@@ -25,9 +27,13 @@ func (a *JsAction) Run(ctx context.Context, conn model.Connection, conf model.Co
 	}
 	jsvm.Set("newPipe", newPipe)
 	jsvm.Set("mustCompile", regexp.MustCompile)
+	jsvm.Set("readFile", func(filename string) string {
+		data, _ := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, filename))
+		return string(data)
+	})
 
 	//_, err := jsvm.RunString(fmt.Sprintf("function run(){%s}\n run()", *a))
-	_, err := jsvm.RunString(string(*a))
+	_, err := jsvm.RunString(LibStr + string(*a))
 
 	return "", err
 }

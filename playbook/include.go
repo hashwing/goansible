@@ -9,19 +9,26 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func FileToTasks(s string, conf model.Config) ([]Task, error) {
+func FileToTaskMaps(s string, conf model.Config) ([]TaskMap, error) {
 	fileContents, err := ioutil.ReadFile(conf.PlaybookFolder + "/" + s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open playbook file: %s", err)
 	}
 
-	var tasks []Task
+	var tasks []TaskMap
 	err = yaml.Unmarshal(fileContents, &tasks)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal playbook contents: %s", err)
 	}
-
 	return tasks, nil
+}
+
+func FileToTasks(s string, conf model.Config) ([]Task, error) {
+	tasks, err := FileToTaskMaps(s, conf)
+	if err != nil {
+		return nil, err
+	}
+	return ConvMapToTasks(tasks), nil
 }
 
 func FilesToValues(fs []string, conf model.Config) (map[string]interface{}, error) {
@@ -55,7 +62,9 @@ func PlaybookToTasks(s string, conf model.Config) ([]Task, error) {
 	}
 	tasks := make([]Task, 0)
 	for _, p := range ps {
-		tasks = append(tasks, p.Tasks...)
+		for _, t := range p.Tasks {
+			tasks = append(tasks, t.Get())
+		}
 	}
 	return tasks, nil
 }

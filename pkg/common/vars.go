@@ -25,6 +25,7 @@ func Vars(vars *model.Vars) map[string]interface{} {
 	p["groupvars"] = vars.GroupVars
 	p["item"] = vars.Item
 	p["itemkey"] = vars.Item
+	p["ctx"] = vars.Ctx
 	return p
 }
 
