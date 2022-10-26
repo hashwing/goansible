@@ -41,6 +41,10 @@ func GetVar(s string, vars *model.Vars) (interface{}, bool) {
 			p = vars.HostVars
 		case "values":
 			p = vars.Values
+		case "ctx":
+			if c, ok := vars.Ctx.(map[string]interface{}); ok {
+				p = c
+			}
 		case "groups":
 			p = vars.Groups
 		case "groupvars":
@@ -90,6 +94,10 @@ func SetVar(s string, value interface{}, vars *model.Vars) {
 			p = vars.HostVars
 		case "values":
 			p = vars.Values
+		case "ctx":
+			if c, ok := vars.Ctx.(map[string]interface{}); ok {
+				p = c
+			}
 		case "groups":
 			p = vars.Groups
 		case "groupvars":
@@ -135,6 +143,9 @@ func ParseTpl(tpl string, vars *model.Vars) (string, error) {
 	}
 	var b bytes.Buffer
 	err = tmpl.Execute(&b, vars)
+	if b.String() == "<no value>" {
+		return "", nil
+	}
 	return b.String(), err
 }
 
@@ -147,6 +158,9 @@ func ParseTplWithPanic(tpl string, vars *model.Vars) string {
 	err = tmpl.Execute(&b, vars)
 	if err != nil {
 		panic(err)
+	}
+	if b.String() == "<no value>" {
+		return ""
 	}
 	return b.String()
 }

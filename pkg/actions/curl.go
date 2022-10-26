@@ -36,14 +36,22 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 	for key, v := range a.Options {
 		switch key {
 		case "data-yaml":
-			data, err := yaml.YAMLToJSON([]byte(common.ParseTplWithPanic(v, vars)))
+			vv := common.ParseTplWithPanic(string(v), vars)
+			if vv == "" {
+				continue
+			}
+			data, err := yaml.YAMLToJSON([]byte(vv))
 			if err != nil {
 				return nil, err
 			}
 			options["data"] = "'" + string(data) + "'"
 			continue
 		case "data-json":
-			d := strings.TrimSpace(common.ParseTplWithPanic(v, vars))
+			vv := common.ParseTplWithPanic(string(v), vars)
+			if vv == "" {
+				continue
+			}
+			d := strings.TrimSpace(vv)
 			if strings.HasPrefix(d, "{") {
 				var v map[string]interface{}
 				err := json.Unmarshal([]byte(d), &v)
@@ -65,7 +73,11 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 				options["data"] = string(b)
 			}
 		case "data-json-file":
-			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, v))
+			vv := common.ParseTplWithPanic(string(v), vars)
+			if vv == "" {
+				continue
+			}
+			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, vv))
 			if err != nil {
 				return nil, err
 			}
@@ -91,7 +103,11 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 				options["data"] = string(b)
 			}
 		case "data-file":
-			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, v))
+			vv := common.ParseTplWithPanic(string(v), vars)
+			if vv == "" {
+				continue
+			}
+			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, vv))
 			if err != nil {
 				return nil, err
 			}
@@ -101,7 +117,11 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 			}
 			options["data"] = string(b)
 		case "data-yaml-file":
-			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, v))
+			vv := common.ParseTplWithPanic(string(v), vars)
+			if vv == "" {
+				continue
+			}
+			data, err := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, vv))
 			if err != nil {
 				return nil, err
 			}
@@ -112,7 +132,11 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 			}
 			options["data"] = "'" + string(data) + "'"
 		case "data":
-			options["data-binary"] = fmt.Sprintf(datab, common.ParseTplWithPanic(string(v), vars))
+			vv := common.ParseTplWithPanic(string(v), vars)
+			if vv == "" {
+				continue
+			}
+			options["data-binary"] = fmt.Sprintf(datab, vv)
 		default:
 			options[key] = common.ParseTplWithPanic(v, vars)
 		}
