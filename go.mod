@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/icza/dyno v0.0.0-20210726202311-f1bafe5d9996 // indirect
 	github.com/imroc/req/v3 v3.22.0 // indirect
+	github.com/jlaffaye/ftp v0.1.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pkg/sftp v1.13.5
@@ -23,6 +24,8 @@ require (
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0
+	gorm.io/driver/sqlite v1.4.3 // indirect
+	gorm.io/gorm v1.24.0 // indirect
 	layeh.com/gopher-luar v1.0.10
 	sigs.k8s.io/yaml v1.3.0
 	software.sslmate.com/src/go-pkcs12 v0.2.0

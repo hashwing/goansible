@@ -19,6 +19,8 @@ type ReqAction struct {
 	Headers         map[string]string `yaml:"headers"`
 	BaseAuth        ReqBaseAuth       `yaml:"baseAuth"`
 	BearerAuthToken string            `yaml:"bearerToken"`
+	DownloadFile    string            `yaml:"downloadFile"`
+	UploadFiles     map[string]string `yaml:"uploadFile"`
 }
 
 type ReqBaseAuth struct {
@@ -35,12 +37,33 @@ func (a *ReqAction) parse(vars *model.Vars) (*ReqAction, error) {
 	}()
 
 	ra := &ReqAction{
-		URL:     common.ParseTplWithPanic(a.URL, vars),
-		Method:  common.ParseTplWithPanic(a.Method, vars),
-		Timeout: a.Timeout,
+		URL:             common.ParseTplWithPanic(a.URL, vars),
+		Method:          common.ParseTplWithPanic(a.Method, vars),
+		Timeout:         a.Timeout,
+		Body:            common.ParseTplWithPanic(a.Body, vars),
+		Headers:         make(map[string]string),
+		BearerAuthToken: common.ParseTplWithPanic(a.BearerAuthToken, vars),
+		DownloadFile:    common.ParseTplWithPanic(a.DownloadFile, vars),
+		UploadFiles:     make(map[string]string),
 	}
 	if a.Timeout == 0 {
 		ra.Timeout = 30
+	}
+	if a.Headers != nil {
+		for k, v := range a.Headers {
+			ra.Headers[k] = common.ParseTplWithPanic(v, vars)
+		}
+	}
+	if a.BaseAuth.Username != "" || a.BaseAuth.Password != "" {
+		ra.BaseAuth = ReqBaseAuth{
+			Username: common.ParseTplWithPanic(a.BaseAuth.Username, vars),
+			Password: common.ParseTplWithPanic(a.BaseAuth.Password, vars),
+		}
+	}
+	if a.UploadFiles != nil {
+		for k, v := range a.Headers {
+			ra.UploadFiles[k] = common.ParseTplWithPanic(v, vars)
+		}
 	}
 	return ra, gerr
 }
@@ -63,6 +86,9 @@ func (a *ReqAction) Run(ctx context.Context, conn model.Connection, conf model.C
 	}
 	if parseAction.BearerAuthToken != "" {
 		r.SetBearerAuthToken(parseAction.BearerAuthToken)
+	}
+	if len(parseAction.UploadFiles) > 0 {
+		r.SetFiles(parseAction.UploadFiles)
 	}
 	resp := r.SetHeaders(parseAction.Headers).
 		SetBody(parseAction.Body).Do()

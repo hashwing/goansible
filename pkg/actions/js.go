@@ -27,6 +27,18 @@ func (a *JsAction) Run(ctx context.Context, conn model.Connection, conf model.Co
 	}
 	jsvm.Set("newPipe", newPipe)
 	jsvm.Set("mustCompile", regexp.MustCompile)
+	jsvm.Set("setVars", func(s string, v interface{}) {
+		common.SetVar(s, v, vars)
+	})
+	jsvm.Set("getVars", func(s string) interface{} {
+		v, _ := common.GetVar(s, vars)
+		return v
+	})
+	jsvm.Set("parseTpl", func(v string) string {
+		return common.ParseTplWithPanic(v, vars)
+	})
+	jsvm.Set("md5", MD5)
+	jsvm.Set("FileMd5", FileMd5)
 	jsvm.Set("readFile", func(filename string) string {
 		data, _ := ioutil.ReadFile(filepath.Join(conf.PlaybookFolder, filename))
 		return string(data)

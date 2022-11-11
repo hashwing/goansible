@@ -3,6 +3,7 @@ package playbook
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/actions"
@@ -79,39 +80,44 @@ func (a *CustomFunc) Run(ctx context.Context, conn model.Connection, conf model.
 	return a.Action.Run(ctx, conn, conf, vars)
 }
 
-func (a *CustomFunc) parseCtx(vars *model.Vars) interface{} {
+func (a *CustomFunc) parseCtx(vars *model.Vars) map[string]interface{} {
 	return parseCtx(a.Ctx, vars)
 }
 
-func parseCtx(ctxv interface{}, vars *model.Vars) interface{} {
+func parseCtx(ctxv interface{}, vars *model.Vars) map[string]interface{} {
 	switch reflect.TypeOf(ctxv).Kind() {
-	case reflect.Slice:
-		var res []string
-		for _, v := range ctxv.([]interface{}) {
-			if s, ok := v.(string); ok {
-				res = append(res, common.ParseTplWithPanic(s, vars))
-			} else {
-				return ctxv
-			}
-		}
-		return res
-	case reflect.String:
-		return common.ParseTplWithPanic(ctxv.(string), vars)
+	// case reflect.Slice:
+	// 	var res []string
+	// 	for _, v := range ctxv.([]interface{}) {
+	// 		if s, ok := v.(string); ok {
+	// 			res = append(res, common.ParseTplWithPanic(s, vars))
+	// 		} else {
+	// 			return ctxv
+	// 		}
+	// 	}
+	// 	return res
+	// case reflect.String:
+	// 	return common.ParseTplWithPanic(ctxv.(string), vars)
 	case reflect.Map:
 		v := reflect.ValueOf(ctxv)
 		res := make(map[string]interface{})
 		for _, k := range v.MapKeys() {
 			if s, ok := v.MapIndex(k).Interface().(string); ok {
+				if strings.HasPrefix(s, "$.") {
+					ss, _ := common.GetVar(strings.TrimPrefix(s, "$."), vars)
+					res[k.Interface().(string)] = ss
+					continue
+				}
 				res[k.Interface().(string)] = common.ParseTplWithPanic(s, vars)
 			} else {
 				res[k.Interface().(string)] = v.MapIndex(k).Interface()
 			}
 		}
 		return res
-	case reflect.Float64:
-		return ctxv.(float64)
+		// case reflect.Float64:
+		// 	return ctxv.(float64)
 	}
-	return ctxv
+	return make(map[string]interface{})
 }
 
 func copyCtx(res map[string]interface{}, ctxv interface{}) {

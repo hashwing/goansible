@@ -2,6 +2,7 @@ package playbook
 
 import (
 	"reflect"
+	"strconv"
 
 	"github.com/hashwing/goansible/model"
 	"github.com/hashwing/goansible/pkg/common"
@@ -24,9 +25,10 @@ func Loop(loop interface{}, vars *model.Vars) []LoopRes {
 			res := make([]LoopRes, 0)
 			switch reflect.TypeOf(loopv).Kind() {
 			case reflect.Slice:
-				for i, item := range loopv.([]interface{}) {
+				v := reflect.ValueOf(loopv)
+				for i := 0; i < v.Len(); i++ {
 					res = append(res, LoopRes{
-						Item:    item,
+						Item:    v.Index(i).Interface(),
 						ItemKey: i,
 					})
 				}
@@ -59,4 +61,22 @@ func Loop(loop interface{}, vars *model.Vars) []LoopRes {
 type LoopRes struct {
 	ItemKey interface{}
 	Item    interface{}
+}
+
+func getConcurrency(v interface{}, vars *model.Vars) int {
+	if v == nil {
+		return 1
+	}
+	if n, ok := v.(int); ok {
+		return n
+	}
+	if s, ok := v.(string); ok {
+		s = common.ParseTplWithPanic(s, vars)
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return 1
+		}
+		return n
+	}
+	return 1
 }

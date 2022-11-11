@@ -24,6 +24,7 @@ type Playbook struct {
 	Tasks          []TaskMap              `yaml:"tasks"`
 	Tag            string                 `yaml:"tag"`
 	Tags           []string               `yaml:"tags"`
+	When           string                 `yaml:"when"`
 }
 
 type SubPlaybookOption struct {
@@ -38,6 +39,11 @@ type Task struct {
 	Debug        string                   `yaml:"debug"`
 	Loop         interface{}              `yaml:"loop"`
 	When         string                   `yaml:"when"`
+	Sleep        int64                    `yaml:"sleep"`
+	While        string                   `yaml:"while"`
+	Async        string                   `yaml:"async"`
+	Await        []string                 `yaml:"await"`
+	Concurrency  interface{}              `yaml:"concurrency"`
 	Include      string                   `yaml:"include"`
 	Tasks        []TaskMap                `yaml:"tasks"`
 	Playbook     string                   `yaml:"playbook"`
@@ -60,15 +66,15 @@ type Task struct {
 	Lua          *actions.LuaAction       `yaml:"lua"`
 	LuaFile      *actions.LuaFileAction   `yaml:"luafile"`
 	Req          *actions.ReqAction       `yaml:"req"`
+	DBInitAction *actions.DBInitAction    `yaml:"dbinit"`
+	DBAction     *actions.DBAction        `yaml:"db"`
+	FtpAction    *actions.FTPAction       `yaml:"ftp"`
 	SetFunc      *SetFunc                 `yaml:"setfunc"`
 	CustomAction model.Action             `yaml:"-"`
 }
 
 func (t *Task) Action() model.Action {
 	var action model.Action
-	if t.CustomAction != nil {
-		action = t.CustomAction
-	}
 	if t.FileAction != nil {
 		action = t.FileAction
 	}
@@ -111,8 +117,20 @@ func (t *Task) Action() model.Action {
 	if t.Req != nil {
 		action = t.Req
 	}
+	if t.DBInitAction != nil {
+		action = t.DBInitAction
+	}
+	if t.DBAction != nil {
+		action = t.DBAction
+	}
+	if t.FtpAction != nil {
+		action = t.FtpAction
+	}
 	if t.SetFunc != nil {
 		action = t.SetFunc
+	}
+	if t.CustomAction != nil {
+		action = t.CustomAction
 	}
 	if action == nil {
 		action = new(actions.NoneAction)

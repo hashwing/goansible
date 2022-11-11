@@ -111,11 +111,8 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 			if err != nil {
 				return nil, err
 			}
-			b, err := json.Marshal(common.ParseTplWithPanic(string(data), vars))
-			if err != nil {
-				return nil, err
-			}
-			options["data"] = string(b)
+			s := common.ParseTplWithPanic(string(data), vars)
+			options["data-binary"] = fmt.Sprintf(datab, s)
 		case "data-yaml-file":
 			vv := common.ParseTplWithPanic(string(v), vars)
 			if vv == "" {
@@ -130,13 +127,16 @@ func (a *CurlAction) parse(vars *model.Vars, conf model.Config) (*CurlAction, er
 			if err != nil {
 				return nil, err
 			}
-			options["data"] = "'" + string(data) + "'"
+			b, _ := json.Marshal(string(data))
+			options["data"] = string(b)
+			//options["data"] = "'" + string(data) + "'"
 		case "data":
 			vv := common.ParseTplWithPanic(string(v), vars)
 			if vv == "" {
 				continue
 			}
-			options["data-binary"] = fmt.Sprintf(datab, vv)
+			s := common.ParseTplWithPanic(string(vv), vars)
+			options["data-binary"] = fmt.Sprintf(datab, s)
 		default:
 			options[key] = common.ParseTplWithPanic(v, vars)
 		}

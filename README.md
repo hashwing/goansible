@@ -170,6 +170,7 @@ goansible 内置部分函数：
     - b
 - name: loop values
   shell: echo {{ .Item.xxx }}
+  concurrency: 2  # 并发数
   loop: values.loops
 
 ```

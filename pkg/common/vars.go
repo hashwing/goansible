@@ -143,10 +143,14 @@ func ParseTpl(tpl string, vars *model.Vars) (string, error) {
 	}
 	var b bytes.Buffer
 	err = tmpl.Execute(&b, vars)
-	if b.String() == "<no value>" {
+	if err != nil {
+		return "", err
+	}
+	v := b.String()
+	if v == "<no value>" {
 		return "", nil
 	}
-	return b.String(), err
+	return v, err
 }
 
 func ParseTplWithPanic(tpl string, vars *model.Vars) string {
@@ -159,10 +163,11 @@ func ParseTplWithPanic(tpl string, vars *model.Vars) string {
 	if err != nil {
 		panic(err)
 	}
-	if b.String() == "<no value>" {
+	v := b.String()
+	if v == "<no value>" {
 		return ""
 	}
-	return b.String()
+	return v
 }
 
 func newTpl() *template.Template {
@@ -205,3 +210,5 @@ func ParseArray(s string) []string {
 	}
 	return strings.Split(s, ",")
 }
+
+var GlobalVars sync.Map
